@@ -1,0 +1,66 @@
+---
+import type { Product } from '../lib/types';
+
+interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+
+const linkHref = product.affiliate_link || (product.company_website ? product.company_website : `/reviews/${product.slug}`);
+const linkText = product.affiliate_link ? 'Buy Now' : 'Check Price';
+const linkRel = product.affiliate_link ? 'noopener noreferrer sponsored' : product.company_website ? 'noopener noreferrer' : undefined;
+const linkTarget = (product.affiliate_link || product.company_website) ? '_blank' : undefined;
+---
+
+<article class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden flex flex-col hover:border-zinc-700 transition-colors">
+  <div class="aspect-[4/3] bg-zinc-800 flex items-center justify-center overflow-hidden">
+    {product.image_url ? (
+      <img
+        src={product.image_url}
+        alt={product.product_name}
+        class="w-full h-full object-contain p-4"
+        loading="lazy"
+      />
+    ) : (
+      <svg class="w-16 h-16 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+      </svg>
+    )}
+  </div>
+
+  <div class="p-4 flex flex-col flex-1">
+    {product.company_name && (
+      <p class="text-xs text-zinc-500 mb-1">{product.company_name}</p>
+    )}
+
+    <h3 class="text-sm font-semibold text-white mb-1 line-clamp-2">{product.product_name}</h3>
+
+    {product.rating != null && (
+      <div class="flex items-center gap-1 mb-2">
+        <span class="text-xs font-bold text-indigo-400">{product.rating}/10</span>
+      </div>
+    )}
+
+    {product.short_verdict && (
+      <p class="text-xs text-zinc-400 mb-3 line-clamp-2 flex-1">{product.short_verdict}</p>
+    )}
+
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-zinc-800">
+      {product.retail_price ? (
+        <span class="text-sm font-semibold text-white">${product.retail_price.toFixed(2)}</span>
+      ) : (
+        <span></span>
+      )}
+
+      <a
+        href={linkHref}
+        target={linkTarget}
+        rel={linkRel}
+        class="text-xs font-medium px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md transition-colors"
+      >
+        {linkText}
+      </a>
+    </div>
+  </div>
+</article>
