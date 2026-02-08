@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import EmptyState from '../components/EmptyState.astro';
+---
+
+<BaseLayout title="My Picks" description="Curated top recommendations for gaming mice, keyboards, mousepads, and IEMs across all budgets.">
+  <section class="max-w-6xl mx-auto px-4 py-16">
+    <h1 class="text-3xl font-bold text-white mb-2">My Picks</h1>
+    <p class="text-zinc-400 mb-6">Curated top recommendations across all categories and budgets.</p>
+
+    <AffiliateDisclosure />
+
+    <div class="mt-8">
+      <EmptyState
+        title="Picks coming soon"
+        description="I'm working on curating my top recommendations. Subscribe to get notified when they're ready."
+        ctaText="Browse Reviews"
+        ctaHref="/reviews"
+      />
+    </div>
+  </section>
+</BaseLayout>

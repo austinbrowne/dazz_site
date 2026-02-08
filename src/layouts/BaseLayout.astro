@@ -1,0 +1,120 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  noIndex?: boolean;
+}
+
+const {
+  title,
+  description = 'Gaming peripheral reviews with a budget focus. Mice, keyboards, mousepads, IEMs, and more.',
+  ogImage = '/images/og-default.png',
+  noIndex = false,
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const siteName = 'Dazz Trazak';
+const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalURL} />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+
+    {noIndex && <meta name="robots" content="noindex" />}
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site)} />
+    <meta property="og:site_name" content={siteName} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(ogImage, Astro.site)} />
+
+    <!-- Analytics: Replace with your Plausible/Umami script -->
+    <!-- <script defer data-domain="dazztrazak.com" src="https://plausible.io/js/script.js"></script> -->
+  </head>
+  <body class="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded">
+      Skip to main content
+    </a>
+
+    <header class="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-40">
+      <nav class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between" aria-label="Main navigation">
+        <a href="/" class="text-xl font-bold tracking-tight text-white hover:text-indigo-400 transition-colors">
+          Dazz Trazak
+        </a>
+
+        <ul class="flex items-center gap-6 text-sm font-medium">
+          <li><a href="/picks" class="text-zinc-400 hover:text-white transition-colors">My Picks</a></li>
+          <li><a href="/reviews" class="text-zinc-400 hover:text-white transition-colors">Reviews</a></li>
+          <li><a href="/guides" class="text-zinc-400 hover:text-white transition-colors">Guides</a></li>
+          <li><a href="/learn" class="text-zinc-400 hover:text-white transition-colors">Learn</a></li>
+          <li><a href="/work-with-me" class="text-zinc-400 hover:text-white transition-colors">Work With Me</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main-content" class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="border-t border-zinc-800 mt-auto">
+      <div class="max-w-6xl mx-auto px-4 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <h3 class="text-sm font-semibold text-white mb-3">Dazz Trazak</h3>
+            <p class="text-sm text-zinc-400">
+              Gaming peripheral reviews with a budget focus. Mice, keyboards, mousepads, IEMs, and more.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-semibold text-white mb-3">Links</h3>
+            <ul class="space-y-2 text-sm">
+              <li><a href="/picks" class="text-zinc-400 hover:text-white transition-colors">My Picks</a></li>
+              <li><a href="/reviews" class="text-zinc-400 hover:text-white transition-colors">Reviews</a></li>
+              <li><a href="/guides" class="text-zinc-400 hover:text-white transition-colors">Guides</a></li>
+              <li><a href="/learn" class="text-zinc-400 hover:text-white transition-colors">Learn</a></li>
+              <li><a href="/work-with-me" class="text-zinc-400 hover:text-white transition-colors">Work With Me</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-semibold text-white mb-3">Connect</h3>
+            <ul class="space-y-2 text-sm">
+              <li><a href="https://youtube.com/@dazztrazak" target="_blank" rel="noopener noreferrer" class="text-zinc-400 hover:text-white transition-colors">YouTube</a></li>
+              <li><a href="https://twitter.com/dazztrazak" target="_blank" rel="noopener noreferrer" class="text-zinc-400 hover:text-white transition-colors">Twitter / X</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mt-8 pt-8 border-t border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+          <p>&copy; {new Date().getFullYear()} Dazz Trazak. All rights reserved.</p>
+          <div class="flex gap-4">
+            <a href="/privacy" class="hover:text-zinc-300 transition-colors">Privacy Policy</a>
+            <a href="/terms" class="hover:text-zinc-300 transition-colors">Terms</a>
+            <a href="/disclosure" class="hover:text-zinc-300 transition-colors">Affiliate Disclosure</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

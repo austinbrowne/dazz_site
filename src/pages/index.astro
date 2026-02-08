@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
+---
+
+<BaseLayout title="Dazz Trazak" description="Gaming peripheral reviews with a budget focus. Mice, HE/TMR keyboards, mousepads, IEMs, and more.">
+  <!-- Hero -->
+  <section class="max-w-6xl mx-auto px-4 py-20 text-center">
+    <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
+      Gaming Peripherals.<br />Honest Reviews.
+    </h1>
+    <p class="text-lg text-zinc-400 max-w-2xl mx-auto mb-8">
+      Budget-focused reviews of gaming mice, hall effect keyboards, mousepads, IEMs, and more. No fluff, no paid opinions.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="/picks" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors">
+        See My Picks
+      </a>
+      <a href="https://youtube.com/@dazztrazak" target="_blank" rel="noopener noreferrer" class="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-lg transition-colors border border-zinc-700">
+        Watch on YouTube
+      </a>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="max-w-6xl mx-auto px-4 py-16">
+    <h2 class="text-2xl font-bold text-white mb-8 text-center">Browse by Category</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <a href="/reviews/mice" class="group bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
+        <span class="text-3xl mb-2 block">🖱️</span>
+        <span class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">Mice</span>
+      </a>
+      <a href="/reviews/keyboards" class="group bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
+        <span class="text-3xl mb-2 block">⌨️</span>
+        <span class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">Keyboards</span>
+      </a>
+      <a href="/reviews/mousepads" class="group bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
+        <span class="text-3xl mb-2 block">🟩</span>
+        <span class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">Mousepads</span>
+      </a>
+      <a href="/reviews/iems" class="group bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
+        <span class="text-3xl mb-2 block">🎧</span>
+        <span class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">IEMs</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="max-w-6xl mx-auto px-4 py-16">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-8 md:p-12">
+      <h2 class="text-2xl font-bold text-white mb-4">About Dazz</h2>
+      <p class="text-zinc-400 mb-4 max-w-3xl">
+        I review gaming peripherals with a focus on value. Whether it's a $20 mouse that punches above its weight or a premium endgame pick, I test everything and give my honest take. I also host a weekly podcast covering the latest in mice and peripherals.
+      </p>
+      <div class="flex gap-4">
+        <a href="https://youtube.com/@dazztrazak" target="_blank" rel="noopener noreferrer" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+          YouTube &rarr;
+        </a>
+        <a href="https://twitter.com/dazztrazak" target="_blank" rel="noopener noreferrer" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+          Twitter / X &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="max-w-xl mx-auto px-4 py-16">
+    <NewsletterSignup />
+  </section>
+</BaseLayout>
