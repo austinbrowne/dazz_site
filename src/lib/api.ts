@@ -1,6 +1,6 @@
 import type { Product, Company, CreatorProfile } from './types';
 
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://mouse-domination:5000/api/v1/public';
+const API_BASE = import.meta.env.API_BASE_URL || 'http://mouse-domination:5000/api/v1/public';
 const API_KEY = import.meta.env.API_KEY || '';
 
 async function apiFetch<T>(endpoint: string): Promise<T | null> {
@@ -10,6 +10,7 @@ async function apiFetch<T>(endpoint: string): Promise<T | null> {
         'X-API-Key': API_KEY,
         'Accept': 'application/json',
       },
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (!res.ok) {
@@ -29,7 +30,11 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  return apiFetch<Product>(`/products/${slug}`);
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
+    console.error(`Invalid slug: ${slug}`);
+    return null;
+  }
+  return apiFetch<Product>(`/products/${encodeURIComponent(slug)}`);
 }
 
 export async function getPicks(): Promise<Product[]> {

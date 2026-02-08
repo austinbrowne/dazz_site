@@ -50,6 +50,20 @@
 - dazz-infra integration (steps 11-12, requires changes in separate repo)
 - Analytics script (waiting on Plausible/Umami decision)
 
+## Post-Review Fixes (2026-02-08)
+- [x] Created .dockerignore (prevent .git, node_modules, .env in build context)
+- [x] Added nginx security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
+- [x] Added gzip compression to nginx config
+- [x] Fixed nginx cache semantics (hashed assets immutable 1y, static assets 7d revalidate)
+- [x] Fixed nginx health endpoint (default_type before return)
+- [x] Renamed PUBLIC_API_URL → API_BASE_URL (prevent client-side env var exposure)
+- [x] Added fetch timeout (10s AbortSignal) to API client
+- [x] Added slug validation regex + encodeURIComponent in getProductBySlug
+- [x] Removed dead nav links (/guides, /learn) — pages don't exist yet
+- [x] Installed @tailwindcss/typography for prose classes on legal pages
+- [x] Created .env.example documenting required env vars
+
 ## Progress Log
 - 2026-02-07: Branch created, starting scaffolding
 - 2026-02-07: Full scaffolding complete. Astro 5 + TailwindCSS 4, all pages, components, Docker, CI/CD, types, API client. Build succeeds.
+- 2026-02-08: Fresh Eyes Review (8 specialists + adversarial validator). Fixed all HIGH findings and key MEDIUM findings. Build verified: 8 pages in 437ms.
