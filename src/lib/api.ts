@@ -38,7 +38,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 export async function getPicks(): Promise<Product[]> {
-  return (await apiFetch<Product[]>('/products?pick_category=*')) ?? [];
+  const all = await getProducts();
+  return all.filter(p => p.pick_category);
 }
 
 export async function getCompanies(): Promise<Company[]> {

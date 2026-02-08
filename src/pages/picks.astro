@@ -2,22 +2,94 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
 import EmptyState from '../components/EmptyState.astro';
+import PickCard from '../components/PickCard.astro';
+import { getPicks } from '../lib/api';
+import type { Product } from '../lib/types';
+
+const picks = await getPicks();
+
+/** Display order and labels for pick categories */
+const PICK_SECTIONS: { key: string; label: string }[] = [
+  { key: 'best-budget-mouse', label: 'Best Budget Mouse' },
+  { key: 'best-midrange-mouse', label: 'Best Mid-Range Mouse' },
+  { key: 'best-premium-mouse', label: 'Best Premium Mouse' },
+  { key: 'best-wireless-mouse', label: 'Best Wireless Mouse' },
+  { key: 'best-lightweight', label: 'Best Lightweight Mouse' },
+  { key: 'best-ergo', label: 'Best Ergonomic Mouse' },
+  { key: 'best-he-keyboard', label: 'Best HE Keyboard' },
+  { key: 'best-budget-keyboard', label: 'Best Budget Keyboard' },
+  { key: 'best-speed-mousepad', label: 'Best Mousepad (Speed)' },
+  { key: 'best-control-mousepad', label: 'Best Mousepad (Control)' },
+  { key: 'best-budget-iems', label: 'Best Budget IEMs' },
+  { key: 'best-gaming-iems', label: 'Best Gaming IEMs' },
+];
+
+/** Group picks by pick_category */
+const picksByCategory = new Map<string, Product[]>();
+for (const product of picks) {
+  const cat = product.pick_category;
+  if (!cat) continue;
+  if (!picksByCategory.has(cat)) {
+    picksByCategory.set(cat, []);
+  }
+  picksByCategory.get(cat)!.push(product);
+}
+
+/** Only show sections that have products, in defined order. Add any extras at the end. */
+const definedKeys = new Set(PICK_SECTIONS.map(s => s.key));
+const extraCategories = [...picksByCategory.keys()].filter(k => !definedKeys.has(k));
+
+const sections = [
+  ...PICK_SECTIONS.filter(s => picksByCategory.has(s.key)),
+  ...extraCategories.map(key => ({
+    key,
+    label: key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+  })),
+];
+
+const hasPicks = picks.length > 0;
+
+/** Find the most recent date_acquired among picks for "Last updated" */
+const lastUpdated = picks
+  .map(p => p.date_acquired)
+  .filter((d): d is string => !!d)
+  .sort()
+  .pop();
 ---
 
 <BaseLayout title="My Picks" description="Curated top recommendations for gaming mice, keyboards, mousepads, and IEMs across all budgets.">
   <section class="max-w-6xl mx-auto px-4 py-16">
-    <h1 class="text-3xl font-bold text-white mb-2">My Picks</h1>
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-2 gap-2">
+      <h1 class="text-3xl font-bold text-white">My Picks</h1>
+      {lastUpdated && (
+        <p class="text-xs text-zinc-500">Last updated: {new Date(lastUpdated).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+      )}
+    </div>
     <p class="text-zinc-400 mb-6">Curated top recommendations across all categories and budgets.</p>
 
-    <AffiliateDisclosure />
-
-    <div class="mt-8">
-      <EmptyState
-        title="Picks coming soon"
-        description="I'm working on curating my top recommendations. Subscribe to get notified when they're ready."
-        ctaText="Browse Reviews"
-        ctaHref="/reviews"
-      />
-    </div>
+    {hasPicks ? (
+      <div class="mt-10 space-y-12">
+        <AffiliateDisclosure />
+        {sections.map(({ key, label }) => (
+          <section>
+            <h2 class="text-xl font-bold text-white mb-4">{label}</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(picksByCategory.get(key) ?? []).map(product => (
+                <PickCard product={product} />
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    ) : (
+      <div class="mt-8">
+        <EmptyState
+          title="Picks coming soon"
+          description="I'm working on curating my top recommendations. Subscribe to get notified when they're ready."
+          ctaText="Browse Reviews"
+          ctaHref="/reviews"
+        />
+      </div>
+    )}
   </section>
 </BaseLayout>
