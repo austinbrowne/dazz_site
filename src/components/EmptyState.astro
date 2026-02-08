@@ -1,0 +1,23 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  ctaText?: string;
+  ctaHref?: string;
+}
+
+const { title, description, ctaText, ctaHref } = Astro.props;
+---
+
+<div class="text-center py-16 px-4">
+  <h2 class="text-xl font-semibold text-zinc-300 mb-2">{title}</h2>
+  <p class="text-zinc-500 mb-6 max-w-md mx-auto">{description}</p>
+  {ctaText && ctaHref && (
+    <a
+      href={ctaHref}
+      class="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
+    >
+      {ctaText}
+    </a>
+  )}
+</div>

@@ -1,0 +1,60 @@
+---
+interface Props {
+  variant?: 'inline' | 'card';
+}
+
+const { variant = 'card' } = Astro.props;
+---
+
+<div class={variant === 'card' ? 'bg-zinc-900 border border-zinc-800 rounded-xl p-6' : ''}>
+  <h3 class="text-lg font-semibold text-white mb-1">Stay in the loop</h3>
+  <p class="text-sm text-zinc-400 mb-4">Get weekly deals, new reviews, and hidden gem picks. No spam.</p>
+
+  <form
+    id="newsletter-form"
+    class="flex flex-col sm:flex-row gap-2"
+    aria-label="Newsletter signup"
+  >
+    <label for="newsletter-email" class="sr-only">Email address</label>
+    <input
+      id="newsletter-email"
+      type="email"
+      name="email"
+      required
+      placeholder="you@example.com"
+      class="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+      autocomplete="email"
+    />
+    <!-- Honeypot -->
+    <input type="text" name="hp_field" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
+    <button
+      type="submit"
+      class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
+    >
+      Subscribe
+    </button>
+  </form>
+
+  <div id="newsletter-status" class="mt-2 text-sm hidden" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+  const form = document.getElementById('newsletter-form') as HTMLFormElement;
+  const status = document.getElementById('newsletter-status') as HTMLDivElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = (form.querySelector('input[type="email"]') as HTMLInputElement)?.value;
+    const honeypot = (form.querySelector('input[name="hp_field"]') as HTMLInputElement)?.value;
+
+    if (honeypot) return; // Bot detected
+
+    status.classList.remove('hidden', 'text-green-400', 'text-red-400', 'text-yellow-400');
+
+    // TODO: Replace with actual newsletter provider API call
+    // For now, show a placeholder message
+    status.textContent = 'Newsletter signup coming soon! Check back later.';
+    status.classList.add('text-yellow-400');
+  });
+</script>
