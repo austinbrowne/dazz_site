@@ -1,0 +1,68 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PickCard from '../../../components/PickCard.astro';
+import EmptyState from '../../../components/EmptyState.astro';
+import { getProducts } from '../../../lib/api';
+import { CATEGORY_LABELS, CATEGORY_SLUGS } from '../../../lib/types';
+
+export async function getStaticPaths() {
+  const products = await getProducts();
+
+  if (products.length === 0) {
+    console.warn('getStaticPaths: API returned 0 products — no category pages will be generated');
+    return [];
+  }
+
+  return CATEGORY_SLUGS.map((slug) => {
+    const categoryProducts = products
+      .filter((p) => p.category_slug === slug)
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+
+    return {
+      params: { category: slug },
+      props: { categorySlug: slug, products: categoryProducts },
+    };
+  });
+}
+
+interface Props {
+  categorySlug: CategorySlug;
+  products: import('../../../lib/types').Product[];
+}
+
+const { categorySlug, products } = Astro.props;
+const categoryLabel = CATEGORY_LABELS[categorySlug];
+const pageTitle = `${categoryLabel} Reviews`;
+const pageDescription = `Browse our ${categoryLabel.toLowerCase()} reviews.`;
+---
+
+<BaseLayout title={pageTitle} description={pageDescription}>
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6">
+      <ol class="flex items-center gap-2 text-sm text-zinc-400">
+        <li><a href="/reviews" class="hover:text-white transition-colors">Reviews</a></li>
+        <li aria-hidden="true" class="text-zinc-600">/</li>
+        <li aria-current="page" class="text-zinc-200">{categoryLabel}</li>
+      </ol>
+    </nav>
+
+    <h1 class="text-3xl font-bold text-white mb-2">{categoryLabel} Reviews</h1>
+    <p class="text-zinc-400 mb-8">{products.length} {products.length === 1 ? 'review' : 'reviews'}</p>
+
+    {products.length > 0 ? (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {products.map((product) => (
+          <PickCard product={product} />
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        title={`No ${categoryLabel.toLowerCase()} reviews yet`}
+        description={`We haven't reviewed any ${categoryLabel.toLowerCase()} yet. Check out our other categories.`}
+        ctaText="Browse all reviews"
+        ctaHref="/reviews"
+      />
+    )}
+  </div>
+</BaseLayout>

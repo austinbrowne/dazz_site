@@ -1,0 +1,319 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AffiliateDisclosure from '../../../components/AffiliateDisclosure.astro';
+import PickCard from '../../../components/PickCard.astro';
+import { getProducts } from '../../../lib/api';
+import { getSpecEntries } from '../../../lib/specs';
+import { getRelatedProducts } from '../../../lib/products';
+import { extractYouTubeId, YOUTUBE_EMBED_BASE, YOUTUBE_IFRAME_SANDBOX } from '../../../lib/youtube';
+import { CATEGORY_LABELS } from '../../../lib/types';
+import type { Product } from '../../../lib/types';
+
+/** Rating color map — explicit classes, no dynamic interpolation */
+const RATING_COLORS: Record<string, string> = {
+  great: 'text-green-400',
+  good: 'text-indigo-400',
+  average: 'text-yellow-400',
+  poor: 'text-red-400',
+};
+
+function getRatingColor(rating: number): string {
+  if (rating >= 8) return RATING_COLORS.great;
+  if (rating >= 6) return RATING_COLORS.good;
+  if (rating >= 4) return RATING_COLORS.average;
+  return RATING_COLORS.poor;
+}
+
+export async function getStaticPaths() {
+  const products = await getProducts();
+
+  if (products.length === 0) {
+    console.warn('getStaticPaths: API returned 0 products — no product pages will be generated');
+    return [];
+  }
+
+  return products.map((product) => ({
+    params: {
+      category: product.category_slug ?? 'other',
+      slug: product.slug,
+    },
+    props: {
+      product,
+      relatedProducts: getRelatedProducts(product, products),
+    },
+  }));
+}
+
+interface Props {
+  product: Product;
+  relatedProducts: Product[];
+}
+
+const { product, relatedProducts } = Astro.props;
+const categorySlug = product.category_slug ?? 'other';
+const categoryLabel = product.category_slug ? CATEGORY_LABELS[product.category_slug] : 'Other';
+
+// Rating validation: clamp to 0-10 range
+const validRating = product.rating != null && Number.isFinite(product.rating)
+  && product.rating >= 0 && product.rating <= 10
+  ? product.rating : null;
+
+// Price handling: treat <= 0 as null
+const displayPrice = product.retail_price && product.retail_price > 0 ? product.retail_price : null;
+
+// Affiliate link validation
+let buyHref: string | null = null;
+let buyText = '';
+let buyRel = '';
+let buyExternal = false;
+
+if (product.affiliate_link) {
+  try {
+    const url = new URL(product.affiliate_link);
+    if (url.protocol === 'https:') {
+      buyHref = product.affiliate_link;
+      buyText = 'Buy Now';
+      buyRel = 'noopener noreferrer sponsored';
+      buyExternal = true;
+    }
+  } catch { console.warn(`Invalid affiliate_link for "${product.product_name}": ${product.affiliate_link}`); }
+}
+if (!buyHref && product.company_website) {
+  try {
+    const url = new URL(product.company_website);
+    if (url.protocol === 'https:') {
+      buyHref = product.company_website;
+      buyText = 'Check Price';
+      buyRel = 'noopener noreferrer';
+      buyExternal = true;
+    }
+  } catch { console.warn(`Invalid company_website for "${product.product_name}": ${product.company_website}`); }
+}
+
+// Image handling
+const imageUrl = product.image_url?.startsWith('https://') ? product.image_url : null;
+
+// Specs
+const specEntries = getSpecEntries(product.specs);
+
+// Pros/Cons — filter empty strings
+const pros = (product.pros ?? []).filter(Boolean);
+const cons = (product.cons ?? []).filter(Boolean);
+const hasProsOrCons = pros.length > 0 || cons.length > 0;
+
+// Video
+const videoId = product.video_url ? extractYouTubeId(product.video_url) : null;
+
+// Date validation
+const reviewDate = product.date_acquired ? new Date(product.date_acquired) : null;
+const formattedDate = reviewDate && !isNaN(reviewDate.getTime())
+  ? reviewDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  : null;
+
+// Meta
+const pageTitle = `${product.product_name} Review`;
+const pageDescription = product.short_verdict || `Read our review of ${product.product_name}.`;
+
+// JSON-LD
+const jsonLd: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: product.product_name,
+};
+if (imageUrl) jsonLd.image = imageUrl;
+if (product.short_verdict) jsonLd.description = product.short_verdict;
+if (product.company_name) jsonLd.brand = { '@type': 'Brand', name: product.company_name };
+if (displayPrice || buyHref) {
+  const offers: Record<string, unknown> = { '@type': 'Offer' };
+  if (displayPrice) {
+    offers.price = displayPrice.toFixed(2);
+    offers.priceCurrency = 'USD';
+  }
+  if (buyHref) offers.url = buyHref;
+  jsonLd.offers = offers;
+}
+if (validRating != null) {
+  jsonLd.review = {
+    '@type': 'Review',
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: validRating,
+      bestRating: 10,
+      worstRating: 0,
+    },
+    author: { '@type': 'Person', name: 'Dazz Trazak' },
+  };
+}
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} ogType="product">
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />
+  </Fragment>
+
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6">
+      <ol class="flex items-center gap-2 text-sm text-zinc-400">
+        <li><a href="/reviews" class="hover:text-white transition-colors">Reviews</a></li>
+        <li aria-hidden="true" class="text-zinc-600">/</li>
+        <li><a href={`/reviews/${categorySlug}`} class="hover:text-white transition-colors">{categoryLabel}</a></li>
+        <li aria-hidden="true" class="text-zinc-600">/</li>
+        <li aria-current="page" class="text-zinc-200 truncate">{product.product_name}</li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <section class="flex flex-col md:flex-row gap-8 mb-10">
+      <div class="md:w-1/2 aspect-[4/3] bg-zinc-800 rounded-xl flex items-center justify-center overflow-hidden">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={`Photo of ${product.product_name}`}
+            class="w-full h-full object-contain p-4"
+            loading="eager"
+          />
+        ) : (
+          <svg class="w-20 h-20 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+          </svg>
+        )}
+      </div>
+
+      <div class="md:w-1/2 flex flex-col justify-center">
+        {product.company_name && (
+          <p class="text-sm text-zinc-400 mb-1">{product.company_name}</p>
+        )}
+        <h1 class="text-3xl font-bold text-white mb-3">{product.product_name}</h1>
+
+        {validRating != null && (
+          <div class="flex items-center gap-2 mb-3">
+            <span
+              class={`text-2xl font-bold ${getRatingColor(validRating)}`}
+              aria-label={`Rating: ${validRating} out of 10`}
+            >
+              {validRating}/10
+            </span>
+          </div>
+        )}
+
+        {displayPrice && (
+          <p class="text-xl font-semibold text-white mb-4">${displayPrice.toFixed(2)}</p>
+        )}
+
+        {buyHref && (
+          <a
+            href={buyHref}
+            target={buyExternal ? '_blank' : undefined}
+            rel={buyRel}
+            class="inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors text-center"
+          >
+            {buyText}
+          </a>
+        )}
+      </div>
+    </section>
+
+    <!-- Affiliate Disclosure -->
+    {product.affiliate_link && (
+      <div class="mb-8">
+        <AffiliateDisclosure />
+      </div>
+    )}
+
+    <!-- Quick Verdict -->
+    {product.short_verdict && (
+      <section class="mb-10">
+        <h2 class="text-xl font-bold text-white mb-3">Quick Verdict</h2>
+        <p class="text-zinc-300 leading-relaxed">{product.short_verdict}</p>
+      </section>
+    )}
+
+    <!-- Specs -->
+    {specEntries.length > 0 && (
+      <section class="mb-10">
+        <h2 class="text-xl font-bold text-white mb-4">Specifications</h2>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {specEntries.map(({ label, value }) => (
+            <div class="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3">
+              <dt class="text-xs text-zinc-400 mb-1">{label}</dt>
+              <dd class="text-sm font-medium text-white">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    )}
+
+    <!-- Pros / Cons -->
+    {hasProsOrCons && (
+      <section class="mb-10">
+        <h2 class="text-xl font-bold text-white mb-4">Pros & Cons</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {pros.length > 0 && (
+            <div>
+              <h3 class="text-sm font-semibold text-green-400 mb-2">Pros</h3>
+              <ul class="space-y-1.5">
+                {pros.map((pro) => (
+                  <li class="flex items-start gap-2 text-sm text-zinc-300">
+                    <span class="text-green-400 mt-0.5 shrink-0" aria-hidden="true">+</span>
+                    {pro}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {cons.length > 0 && (
+            <div>
+              <h3 class="text-sm font-semibold text-red-400 mb-2">Cons</h3>
+              <ul class="space-y-1.5">
+                {cons.map((con) => (
+                  <li class="flex items-start gap-2 text-sm text-zinc-300">
+                    <span class="text-red-400 mt-0.5 shrink-0" aria-hidden="true">-</span>
+                    {con}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
+    )}
+
+    <!-- Video Review -->
+    {videoId && (
+      <section class="mb-10">
+        <h2 class="text-xl font-bold text-white mb-4">Video Review</h2>
+        <div class="relative w-full overflow-hidden rounded-xl border border-zinc-800" style="padding-bottom: 56.25%;">
+          <iframe
+            src={`${YOUTUBE_EMBED_BASE}${videoId}`}
+            title={`Video review: ${product.product_name}`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            sandbox={YOUTUBE_IFRAME_SANDBOX}
+            allowfullscreen
+            loading="lazy"
+            class="absolute inset-0 w-full h-full"
+          ></iframe>
+        </div>
+      </section>
+    )}
+
+    <!-- Related Products -->
+    {relatedProducts.length > 0 && (
+      <section class="mb-10">
+        <h2 class="text-xl font-bold text-white mb-4">Related Products</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {relatedProducts.map((related) => (
+            <PickCard product={related} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Reviewed Date -->
+    {formattedDate && (
+      <p class="text-xs text-zinc-500 border-t border-zinc-800 pt-6">
+        Reviewed: {formattedDate}
+      </p>
+    )}
+  </div>
+</BaseLayout>

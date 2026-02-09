@@ -13,6 +13,9 @@ export const CATEGORY_MAP: Record<InventoryCategory, CategorySlug | null> = {
   other: null,
 };
 
+/** All valid category slugs */
+export const CATEGORY_SLUGS: CategorySlug[] = ['mice', 'keyboards', 'mousepads', 'iems'];
+
 /** Display names for categories */
 export const CATEGORY_LABELS: Record<CategorySlug, string> = {
   mice: 'Mice',

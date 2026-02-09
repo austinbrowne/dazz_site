@@ -3,36 +3,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import EmptyState from '../components/EmptyState.astro';
 import PickCard from '../components/PickCard.astro';
 import { getProducts } from '../lib/api';
+import { extractYouTubeId, YOUTUBE_EMBED_BASE, YOUTUBE_IFRAME_SANDBOX } from '../lib/youtube';
 import type { Product } from '../lib/types';
-
-/** YouTube video IDs are 11 characters of [A-Za-z0-9_-] */
-const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
-
-/** Extract a YouTube video ID from common URL formats. Returns null if not a recognized YouTube URL. */
-function extractYouTubeId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace('www.', '');
-    let id: string | null = null;
-
-    if (['youtube.com', 'youtube-nocookie.com', 'm.youtube.com'].includes(host)) {
-      // /watch?v=ID
-      const v = parsed.searchParams.get('v');
-      if (v) id = v;
-      // /embed/ID, /shorts/ID, or /live/ID
-      if (!id) {
-        const match = parsed.pathname.match(/^\/(embed|shorts|live)\/([^/?]+)/);
-        if (match) id = match[2];
-      }
-    } else if (host === 'youtu.be') {
-      id = parsed.pathname.slice(1).split('/')[0] || null;
-    }
-
-    return id && YOUTUBE_ID_RE.test(id) ? id : null;
-  } catch {
-    return null;
-  }
-}
 
 const products = await getProducts();
 const hasProducts = products.length > 0;
@@ -105,10 +77,10 @@ const latestVideoId = latestVideoProduct ? extractYouTubeId(latestVideoProduct.v
       <p class="text-zinc-400 mb-6">{latestVideoProduct.product_name}</p>
       <div class="relative w-full overflow-hidden rounded-xl border border-zinc-800" style="padding-bottom: 56.25%;">
         <iframe
-          src={`https://www.youtube-nocookie.com/embed/${latestVideoId}`}
+          src={`${YOUTUBE_EMBED_BASE}${latestVideoId}`}
           title={`Video review: ${latestVideoProduct.product_name}`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+          sandbox={YOUTUBE_IFRAME_SANDBOX}
           allowfullscreen
           loading="lazy"
           class="absolute inset-0 w-full h-full"

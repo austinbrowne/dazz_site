@@ -25,8 +25,12 @@ async function apiFetch<T>(endpoint: string): Promise<T | null> {
   }
 }
 
+let _productsCache: Product[] | null = null;
+
 export async function getProducts(): Promise<Product[]> {
-  return (await apiFetch<Product[]>('/products')) ?? [];
+  if (_productsCache !== null) return _productsCache;
+  _productsCache = (await apiFetch<Product[]>('/products')) ?? [];
+  return _productsCache;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {

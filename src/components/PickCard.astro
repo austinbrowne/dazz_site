@@ -7,17 +7,28 @@ interface Props {
 
 const { product } = Astro.props;
 
-const linkHref = product.affiliate_link || (product.company_website ? product.company_website : `/reviews/${product.slug}`);
-const linkText = product.affiliate_link ? 'Buy Now' : 'Check Price';
-const linkRel = product.affiliate_link ? 'noopener noreferrer sponsored' : product.company_website ? 'noopener noreferrer' : undefined;
-const linkTarget = (product.affiliate_link || product.company_website) ? '_blank' : undefined;
+/** Validate an external URL: must parse and use https: protocol */
+function safeUrl(raw: string | null): string | null {
+  if (!raw) return null;
+  try { return new URL(raw).protocol === 'https:' ? raw : null; }
+  catch { return null; }
+}
+
+const safeAffiliate = safeUrl(product.affiliate_link);
+const safeWebsite = safeUrl(product.company_website);
+const internalHref = `/reviews/${product.category_slug ?? 'other'}/${product.slug}`;
+const linkHref = safeAffiliate || safeWebsite || internalHref;
+const linkText = safeAffiliate ? 'Buy Now' : safeWebsite ? 'Check Price' : 'Read Review';
+const linkRel = safeAffiliate ? 'noopener noreferrer sponsored' : safeWebsite ? 'noopener noreferrer' : undefined;
+const linkTarget = (safeAffiliate || safeWebsite) ? '_blank' : undefined;
+const safeImageUrl = product.image_url?.startsWith('https://') ? product.image_url : null;
 ---
 
 <article class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden flex flex-col hover:border-zinc-700 transition-colors">
   <div class="aspect-[4/3] bg-zinc-800 flex items-center justify-center overflow-hidden">
-    {product.image_url ? (
+    {safeImageUrl ? (
       <img
-        src={product.image_url}
+        src={safeImageUrl}
         alt={product.product_name}
         class="w-full h-full object-contain p-4"
         loading="lazy"
