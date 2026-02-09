@@ -61,13 +61,15 @@ const formAction = buttondownUsername
 
     if (!status || !button || !emailInput) return;
 
-    const originalButtonText = button.textContent;
+    const originalButtonText = button.textContent?.trim() || 'Subscribe';
 
-    function showStatus(message: string, color: 'green' | 'red' | 'yellow') {
+    const STATUS_COLORS = { green: 'text-green-400', red: 'text-red-400', yellow: 'text-yellow-400' } as const;
+
+    function showStatus(message: string, color: keyof typeof STATUS_COLORS) {
       if (!status) return;
-      status.classList.remove('hidden', 'text-green-400', 'text-red-400', 'text-yellow-400');
+      status.classList.remove('hidden', ...Object.values(STATUS_COLORS));
       status.textContent = message;
-      status.classList.add(`text-${color}-400`);
+      status.classList.add(STATUS_COLORS[color]);
       status.focus();
     }
 
@@ -81,6 +83,7 @@ const formAction = buttondownUsername
     }
 
     function setError(message: string) {
+      submitting = false;
       showStatus(message, 'red');
       if (!button || !emailInput) return;
       button.textContent = originalButtonText;
@@ -99,8 +102,11 @@ const formAction = buttondownUsername
       emailInput.disabled = true;
     }
 
+    let submitting = false;
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (submitting) return;
 
       if (honeypot?.value) return; // Bot detected
 
@@ -113,6 +119,7 @@ const formAction = buttondownUsername
         return;
       }
 
+      submitting = true;
       setSubmitting(true);
 
       try {
