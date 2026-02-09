@@ -45,9 +45,9 @@ const picks = products.filter((p) => p.pick_category).slice(0, 4);
 const latestVideoProduct = products
   .filter((p): p is Product & { video_url: string } => !!p.video_url)
   .sort((a, b) => {
-    const da = a.date_acquired ?? '';
-    const db = b.date_acquired ?? '';
-    return db.localeCompare(da);
+    const dateA = a.date_acquired ?? '';
+    const dateB = b.date_acquired ?? '';
+    return dateB.localeCompare(dateA);
   })[0] ?? null;
 
 const latestVideoId = latestVideoProduct ? extractYouTubeId(latestVideoProduct.video_url) : null;
@@ -108,6 +108,7 @@ const latestVideoId = latestVideoProduct ? extractYouTubeId(latestVideoProduct.v
           src={`https://www.youtube-nocookie.com/embed/${latestVideoId}`}
           title={`Video review: ${latestVideoProduct.product_name}`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
           allowfullscreen
           loading="lazy"
           class="absolute inset-0 w-full h-full"
@@ -121,19 +122,19 @@ const latestVideoId = latestVideoProduct ? extractYouTubeId(latestVideoProduct.v
     <h2 class="text-2xl font-bold text-white mb-8 text-center">Browse by Category</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <a href="/reviews/mice" class="group bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
-        <span class="text-3xl mb-2 block">🖱️</span>
+        <span class="text-3xl mb-2 block" aria-hidden="true">🖱️</span>
         <span class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">Mice</span>
       </a>
       <a href="/reviews/keyboards" class="group bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
-        <span class="text-3xl mb-2 block">⌨️</span>
+        <span class="text-3xl mb-2 block" aria-hidden="true">⌨️</span>
         <span class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">Keyboards</span>
       </a>
       <a href="/reviews/mousepads" class="group bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
-        <span class="text-3xl mb-2 block">🟩</span>
+        <span class="text-3xl mb-2 block" aria-hidden="true">🟩</span>
         <span class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">Mousepads</span>
       </a>
       <a href="/reviews/iems" class="group bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
-        <span class="text-3xl mb-2 block">🎧</span>
+        <span class="text-3xl mb-2 block" aria-hidden="true">🎧</span>
         <span class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">IEMs</span>
       </a>
     </div>
