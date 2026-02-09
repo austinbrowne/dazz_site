@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
 import EmptyState from '../components/EmptyState.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
 import PickCard from '../components/PickCard.astro';
 import { getPicks } from '../lib/api';
 import type { Product } from '../lib/types';
@@ -80,15 +81,21 @@ const lastUpdated = picks
             </div>
           </section>
         ))}
+        <div class="max-w-xl">
+          <NewsletterSignup />
+        </div>
       </div>
     ) : (
-      <div class="mt-8">
+      <div class="mt-8 space-y-8">
         <EmptyState
           title="Picks coming soon"
-          description="I'm working on curating my top recommendations. Subscribe to get notified when they're ready."
+          description="I'm working on curating my top recommendations. Sign up below to get notified when they're ready."
           ctaText="Browse Reviews"
           ctaHref="/reviews"
         />
+        <div class="max-w-xl mx-auto">
+          <NewsletterSignup />
+        </div>
       </div>
     )}
   </section>

@@ -4,6 +4,15 @@ interface Props {
 }
 
 const { variant = 'card' } = Astro.props;
+const buttondownUsername = import.meta.env.BUTTONDOWN_USERNAME || '';
+
+if (!buttondownUsername && import.meta.env.DEV) {
+  console.warn('[NewsletterSignup] BUTTONDOWN_USERNAME env var is not set.');
+}
+
+const formAction = buttondownUsername
+  ? `https://buttondown.com/api/emails/${encodeURIComponent(buttondownUsername)}`
+  : undefined;
 ---
 
 <div class={variant === 'card' ? 'bg-zinc-900 border border-zinc-800 rounded-xl p-6' : ''}>
@@ -11,50 +20,122 @@ const { variant = 'card' } = Astro.props;
   <p class="text-sm text-zinc-400 mb-4">Get weekly deals, new reviews, and hidden gem picks. No spam.</p>
 
   <form
-    id="newsletter-form"
+    data-newsletter-form
+    data-buttondown-username={buttondownUsername}
+    action={formAction}
+    method="POST"
     class="flex flex-col sm:flex-row gap-2"
     aria-label="Newsletter signup"
   >
-    <label for="newsletter-email" class="sr-only">Email address</label>
-    <input
-      id="newsletter-email"
-      type="email"
-      name="email"
-      required
-      placeholder="you@example.com"
-      class="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-      autocomplete="email"
-    />
+    <label class="sr-only flex-1">
+      Email address
+      <input
+        type="email"
+        name="email"
+        required
+        maxlength="254"
+        placeholder="you@example.com"
+        class="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        autocomplete="email"
+      />
+    </label>
     <!-- Honeypot -->
-    <input type="text" name="hp_field" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
+    <input type="text" name="url" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
     <button
       type="submit"
-      class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
+      class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       Subscribe
     </button>
   </form>
 
-  <div id="newsletter-status" class="mt-2 text-sm hidden" role="status" aria-live="polite"></div>
+  <div data-newsletter-status class="mt-2 text-sm hidden" role="status" aria-live="polite" tabindex="-1"></div>
 </div>
 
 <script>
-  const form = document.getElementById('newsletter-form') as HTMLFormElement;
-  const status = document.getElementById('newsletter-status') as HTMLDivElement;
+  document.querySelectorAll<HTMLFormElement>('[data-newsletter-form]').forEach((form) => {
+    const status = form.parentElement?.querySelector<HTMLDivElement>('[data-newsletter-status]');
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    const emailInput = form.querySelector<HTMLInputElement>('input[type="email"]');
+    const honeypot = form.querySelector<HTMLInputElement>('input[name="url"]');
 
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    if (!status || !button || !emailInput) return;
 
-    const email = (form.querySelector('input[type="email"]') as HTMLInputElement)?.value;
-    const honeypot = (form.querySelector('input[name="hp_field"]') as HTMLInputElement)?.value;
+    const originalButtonText = button.textContent;
 
-    if (honeypot) return; // Bot detected
+    function showStatus(message: string, color: 'green' | 'red' | 'yellow') {
+      if (!status) return;
+      status.classList.remove('hidden', 'text-green-400', 'text-red-400', 'text-yellow-400');
+      status.textContent = message;
+      status.classList.add(`text-${color}-400`);
+      status.focus();
+    }
 
-    status.classList.remove('hidden', 'text-green-400', 'text-red-400', 'text-yellow-400');
+    let cooldownTimer: ReturnType<typeof setTimeout> | undefined;
 
-    // TODO: Replace with actual newsletter provider API call
-    // For now, show a placeholder message
-    status.textContent = 'Newsletter signup coming soon! Check back later.';
-    status.classList.add('text-yellow-400');
+    function setSubmitting(submitting: boolean) {
+      if (!button || !emailInput) return;
+      button.disabled = submitting;
+      emailInput.disabled = submitting;
+      button.textContent = submitting ? 'Subscribing...' : originalButtonText;
+    }
+
+    function setError(message: string) {
+      showStatus(message, 'red');
+      if (!button || !emailInput) return;
+      button.textContent = originalButtonText;
+      emailInput.disabled = false;
+      // 3s cooldown before allowing retry
+      button.disabled = true;
+      clearTimeout(cooldownTimer);
+      cooldownTimer = setTimeout(() => { button!.disabled = false; }, 3_000);
+    }
+
+    function setTerminal(message: string, color: 'green' | 'yellow') {
+      if (!button || !emailInput) return;
+      showStatus(message, color);
+      button.disabled = true;
+      emailInput.value = '';
+      emailInput.disabled = true;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (honeypot?.value) return; // Bot detected
+
+      const email = emailInput?.value;
+      if (!email) return;
+
+      const username = form.dataset.buttondownUsername;
+      if (!username) {
+        showStatus('Something went wrong. Try again?', 'red');
+        return;
+      }
+
+      setSubmitting(true);
+
+      try {
+        const res = await fetch(
+          `https://buttondown.com/api/emails/${encodeURIComponent(username)}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ email }),
+            signal: AbortSignal.timeout(10_000),
+          },
+        );
+
+        if (res.ok || res.status === 201) {
+          setTerminal('Check your inbox to confirm!', 'green');
+        } else if (res.status === 409) {
+          setTerminal("You're already on the list!", 'yellow');
+        } else {
+          setError('Something went wrong. Try again?');
+        }
+      } catch {
+        setError('Something went wrong. Try again?');
+      }
+    });
   });
 </script>
