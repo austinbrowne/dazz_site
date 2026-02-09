@@ -1,23 +1,225 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCreatorProfile, getCompanies } from '../lib/api';
+import { CONTACT_EMAIL, DEFAULT_SOCIAL_LINKS } from '../lib/constants';
+
+/** Brand-name overrides for stat key humanization */
+const BRAND_NAMES: Record<string, string> = {
+  youtube: 'YouTube',
+  twitter: 'Twitter',
+  twitch: 'Twitch',
+  tiktok: 'TikTok',
+  iem: 'IEM',
+  dpi: 'DPI',
+};
+
+/** Convert underscore_keys to Title Case with brand overrides */
+function formatStatKey(key: string): string {
+  return key
+    .split('_')
+    .filter(Boolean)
+    .map((word) => BRAND_NAMES[word.toLowerCase()] ?? (word.charAt(0).toUpperCase() + word.slice(1)))
+    .join(' ');
+}
+
+/** Format a stat value for display: numbers get compact formatting, strings pass through */
+function formatStatValue(value: unknown): string | null {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || value < 0) return null;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+    if (value >= 1_000) {
+      const k = (value / 1_000).toFixed(1);
+      if (parseFloat(k) >= 1000) return '1M';
+      return `${k.replace(/\.0$/, '')}K`;
+    }
+    return value.toLocaleString();
+  }
+  if (typeof value === 'string') return value;
+  return null;
+}
+
+/** Filter a Record to only renderable entries (string or number values) */
+function getRenderableEntries(record: Record<string, unknown> | null): [string, string][] {
+  if (!record) return [];
+  return Object.entries(record)
+    .filter(([key]) => key.trim() !== '')
+    .map(([key, value]) => [key, formatStatValue(value)] as [string, string | null])
+    .filter((entry): entry is [string, string] => entry[1] !== null);
+}
+
+const [profile, allCompanies] = await Promise.all([getCreatorProfile(), getCompanies()]);
+
+if (!profile) {
+  console.warn('CreatorProfile API returned null — work-with-me page will render with static content only');
+}
+
+const hasProfile = profile !== null;
+const displayName = profile?.display_name ?? 'Dazz Trazak';
+const socialLinks = profile?.social_links ?? DEFAULT_SOCIAL_LINKS;
+const EMAIL_RE = /^[^\s@?&]+@[^\s@?&]+\.[^\s@?&]+$/;
+const rawEmail = typeof socialLinks.email === 'string' ? socialLinks.email : null;
+const contactEmail = rawEmail && EMAIL_RE.test(rawEmail) ? rawEmail : CONTACT_EMAIL;
+
+// Stats and demographics: filter to renderable entries
+const statsEntries = getRenderableEntries(profile?.platform_stats ?? null);
+const demographicEntries = getRenderableEntries(profile?.audience_demographics ?? null);
+
+// Content niches: filter out empty strings
+const niches = profile?.content_niches?.filter((n) => n.trim()) ?? [];
+const hasNiches = niches.length > 0;
+
+// Photo: only render if HTTPS
+const photoUrl = profile?.photo_url?.startsWith('https://') ? profile.photo_url : null;
+
+// Partners: companies with affiliate relationships, sorted alphabetically
+// Sanitize website URLs to HTTPS-only (SEC-001)
+const partners = allCompanies
+  .filter((c) => c.affiliate_link && c.name?.trim())
+  .map((c) => ({ ...c, website: c.website?.startsWith('https://') ? c.website : null }))
+  .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+
+// Social links for Contact section (exclude email, filter to HTTPS-only)
+const contactSocialLinks = Object.entries(socialLinks)
+  .filter(([key, url]) => key !== 'email' && typeof url === 'string' && url.startsWith('https://'));
 ---
 
-<BaseLayout title="Work With Me" description="Interested in working together? Learn about sponsorship and collaboration opportunities.">
-  <section class="max-w-3xl mx-auto px-4 py-16">
-    <h1 class="text-3xl font-bold text-white mb-4">Work With Me</h1>
-    <p class="text-zinc-400 mb-8">
-      I'm always open to working with brands that make great gaming peripherals. If you'd like to discuss sponsorship, review units, or collaboration opportunities, get in touch.
-    </p>
+<BaseLayout title="Work With Me" description="Audience stats, partnership opportunities, and collaboration details for Dazz Trazak.">
+  <!-- Hero / About -->
+  <section class="max-w-4xl mx-auto px-4 py-16">
+    <div class="flex flex-col sm:flex-row gap-6 items-start">
+      {photoUrl && (
+        <img
+          src={photoUrl}
+          alt={displayName}
+          width="96"
+          height="96"
+          class="w-24 h-24 rounded-full object-cover flex-shrink-0"
+        />
+      )}
+      <div>
+        <h1 class="text-3xl font-bold text-white mb-2">{displayName}</h1>
+        {profile?.tagline && (
+          <p class="text-lg text-indigo-400 mb-4">{profile.tagline}</p>
+        )}
+        {profile?.bio && (
+          <p class="text-zinc-400 mb-4 max-w-2xl">{profile.bio}</p>
+        )}
+        {profile?.location && (
+          <p class="text-sm text-zinc-500">{profile.location}</p>
+        )}
+        {hasNiches && (
+          <div class="flex flex-wrap gap-2 mt-4">
+            {niches.map((niche) => (
+              <span class="px-3 py-1 bg-zinc-800 text-zinc-300 text-xs font-medium rounded-full">{niche}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
 
-    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-8">
-      <h2 class="text-xl font-semibold text-white mb-4">Get in Touch</h2>
-      <p class="text-zinc-400 mb-6">
-        The best way to reach me is via email or Twitter DM.
+  <!-- Audience Stats (platform_stats) -->
+  {statsEntries.length > 0 && (
+    <section class="max-w-4xl mx-auto px-4 py-12">
+      <h2 class="text-2xl font-bold text-white mb-6">Platform Reach</h2>
+      <dl class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {statsEntries.map(([key, value]) => (
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center flex flex-col-reverse">
+            <dt class="text-sm text-zinc-400">{formatStatKey(key)}</dt>
+            <dd class="text-2xl font-bold text-white mb-1">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )}
+
+  <!-- Audience Demographics -->
+  {demographicEntries.length > 0 && (
+    <section class="max-w-4xl mx-auto px-4 py-12">
+      <h2 class="text-2xl font-bold text-white mb-6">Audience Demographics</h2>
+      <dl class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {demographicEntries.map(([key, value]) => (
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center flex flex-col-reverse">
+            <dt class="text-sm text-zinc-400">{formatStatKey(key)}</dt>
+            <dd class="text-2xl font-bold text-white mb-1">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )}
+
+  <!-- Services Offered -->
+  <section class="max-w-4xl mx-auto px-4 py-12">
+    <h2 class="text-2xl font-bold text-white mb-6">What I Offer</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-2">Product Reviews</h3>
+        <p class="text-sm text-zinc-400">In-depth, honest reviews on YouTube with detailed testing methodology. Written companion reviews on the site.</p>
+      </div>
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-2">Sponsored Content</h3>
+        <p class="text-sm text-zinc-400">Dedicated videos, integrations, and features with full creative transparency. All sponsorships are clearly disclosed.</p>
+      </div>
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-2">Podcast Features</h3>
+        <p class="text-sm text-zinc-400">Weekly podcast covering gaming peripherals. Brand segments, product spotlights, and interview opportunities.</p>
+      </div>
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-2">Affiliate Partnerships</h3>
+        <p class="text-sm text-zinc-400">Curated affiliate links for products I genuinely recommend. Integrated across reviews, picks pages, and video descriptions.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Past Partners -->
+  {partners.length > 0 && (
+    <section class="max-w-4xl mx-auto px-4 py-12">
+      <h2 class="text-2xl font-bold text-white mb-6">Brands I've Worked With</h2>
+      <div class="flex flex-wrap gap-3">
+        {partners.map((company) => (
+          company.website ? (
+            <a
+              href={company.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300 hover:border-indigo-500 hover:text-white transition-colors"
+            >
+              {company.name}
+            </a>
+          ) : (
+            <span class="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300">
+              {company.name}
+            </span>
+          )
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- Contact CTA -->
+  <section class="max-w-4xl mx-auto px-4 py-12 pb-20">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-8 md:p-12 text-center">
+      <h2 class="text-2xl font-bold text-white mb-4">Let's Work Together</h2>
+      <p class="text-zinc-400 mb-8 max-w-xl mx-auto">
+        Interested in a review, sponsorship, or collaboration? I'd love to hear from you. Reach out via email or DM and I'll get back to you as soon as I can.
       </p>
-      <div class="flex gap-4">
-        <a href="https://twitter.com/dazztrazak" target="_blank" rel="noopener noreferrer" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
-          Twitter / X &rarr;
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a
+          href={`mailto:${contactEmail}`}
+          class="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors"
+        >
+          Send an Email
         </a>
+        {contactSocialLinks.map(([platform, url]) => (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-lg transition-colors border border-zinc-700"
+          >
+            {formatStatKey(platform)}
+          </a>
+        ))}
       </div>
     </div>
   </section>
