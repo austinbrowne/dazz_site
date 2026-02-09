@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
 
 interface Props {
   title: string;
@@ -100,6 +101,10 @@ const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
               <li><a href="https://twitter.com/dazztrazak" target="_blank" rel="noopener noreferrer" class="text-zinc-400 hover:text-white transition-colors">Twitter / X</a></li>
             </ul>
           </div>
+        </div>
+
+        <div class="mt-8 pt-8 border-t border-zinc-800">
+          <NewsletterSignup variant="inline" />
         </div>
 
         <div class="mt-8 pt-8 border-t border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
