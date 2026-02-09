@@ -1,5 +1,56 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import EmptyState from '../components/EmptyState.astro';
+import PickCard from '../components/PickCard.astro';
+import { getProducts } from '../lib/api';
+import type { Product } from '../lib/types';
+
+/** YouTube video IDs are 11 characters of [A-Za-z0-9_-] */
+const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+
+/** Extract a YouTube video ID from common URL formats. Returns null if not a recognized YouTube URL. */
+function extractYouTubeId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace('www.', '');
+    let id: string | null = null;
+
+    if (['youtube.com', 'youtube-nocookie.com', 'm.youtube.com'].includes(host)) {
+      // /watch?v=ID
+      const v = parsed.searchParams.get('v');
+      if (v) id = v;
+      // /embed/ID, /shorts/ID, or /live/ID
+      if (!id) {
+        const match = parsed.pathname.match(/^\/(embed|shorts|live)\/([^/?]+)/);
+        if (match) id = match[2];
+      }
+    } else if (host === 'youtu.be') {
+      id = parsed.pathname.slice(1).split('/')[0] || null;
+    }
+
+    return id && YOUTUBE_ID_RE.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+const products = await getProducts();
+const hasProducts = products.length > 0;
+
+// Featured picks: curated products with a pick_category, take first 4
+const picks = products.filter((p) => p.pick_category).slice(0, 4);
+
+// Latest video: most recent product with a video_url
+// Assumes CRM returns ISO-8601 dates (YYYY-MM-DD) where lexicographic = chronological
+const latestVideoProduct = products
+  .filter((p): p is Product & { video_url: string } => !!p.video_url)
+  .sort((a, b) => {
+    const da = a.date_acquired ?? '';
+    const db = b.date_acquired ?? '';
+    return db.localeCompare(da);
+  })[0] ?? null;
+
+const latestVideoId = latestVideoProduct ? extractYouTubeId(latestVideoProduct.video_url) : null;
 ---
 
 <BaseLayout title="Dazz Trazak" description="Gaming peripheral reviews with a budget focus. Mice, HE/TMR keyboards, mousepads, IEMs, and more.">
@@ -21,8 +72,52 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
   </section>
 
+  <!-- Featured Picks -->
+  {hasProducts && picks.length > 0 ? (
+    <section class="max-w-6xl mx-auto px-4 py-16">
+      <div class="flex items-end justify-between mb-8">
+        <h2 class="text-2xl font-bold text-white">Featured Picks</h2>
+        <a href="/picks" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+          See all picks &rarr;
+        </a>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {picks.map((product) => (
+          <PickCard product={product} />
+        ))}
+      </div>
+    </section>
+  ) : !hasProducts ? (
+    <section class="max-w-6xl mx-auto px-4 py-16">
+      <EmptyState
+        title="Reviews coming soon"
+        description="I'm working on testing and reviewing the latest gaming peripherals. Sign up below to get notified when reviews go live."
+        ctaText="Browse Categories"
+        ctaHref="#categories"
+      />
+    </section>
+  ) : null}
+
+  <!-- Latest Video -->
+  {latestVideoId && latestVideoProduct && (
+    <section class="max-w-4xl mx-auto px-4 py-16">
+      <h2 class="text-2xl font-bold text-white mb-2">Latest Review</h2>
+      <p class="text-zinc-400 mb-6">{latestVideoProduct.product_name}</p>
+      <div class="relative w-full overflow-hidden rounded-xl border border-zinc-800" style="padding-bottom: 56.25%;">
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${latestVideoId}`}
+          title={`Video review: ${latestVideoProduct.product_name}`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          loading="lazy"
+          class="absolute inset-0 w-full h-full"
+        ></iframe>
+      </div>
+    </section>
+  )}
+
   <!-- Categories -->
-  <section class="max-w-6xl mx-auto px-4 py-16">
+  <section id="categories" class="max-w-6xl mx-auto px-4 py-16">
     <h2 class="text-2xl font-bold text-white mb-8 text-center">Browse by Category</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <a href="/reviews/mice" class="group bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
