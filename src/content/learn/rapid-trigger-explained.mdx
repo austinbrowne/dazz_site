@@ -1,0 +1,116 @@
+---
+title: "Rapid Trigger Explained"
+description: "What rapid trigger is, how it works, why competitive FPS players use it, and how to configure it on your hall effect keyboard."
+order: 2
+section: "Hall Effect"
+---
+
+Rapid trigger is the single feature most responsible for hall effect keyboards going mainstream. It fundamentally changes how fast a key can re-register after being released, and for competitive FPS players, that difference is real and measurable.
+
+## The Problem Rapid Trigger Solves
+
+On a traditional mechanical keyboard, every switch has two fixed points:
+
+- **Actuation point** — Where the key registers on the way down (typically ~2.0mm)
+- **Reset point** — Where the key resets on the way up (typically ~1.5mm, above the actuation point)
+
+The gap between these two points is called **hysteresis**. It exists to prevent the switch from rapidly toggling on and off when hovering near the actuation point.
+
+Here's the problem for gamers: when you release a key and want to press it again, you have to travel all the way up past the reset point (1.5mm from bottom) before the key will accept a new press. Then you have to travel back down to the actuation point (2.0mm from top). That's a significant distance — roughly 2.5mm of total travel just to re-press a key.
+
+In competitive FPS games, this delay matters. Counter-strafing (tapping the opposite direction key to stop your character's momentum instantly) requires pressing and releasing directional keys as fast as possible. Every millisecond of travel time is time your character is still moving, making your aim less accurate.
+
+## How Rapid Trigger Works
+
+Rapid trigger replaces the fixed reset point with a dynamic one. Instead of requiring the key to travel up to a specific position before it can re-trigger, the keyboard monitors the direction of key travel in real time.
+
+The rules are simple:
+
+1. **Key registers** when it passes the actuation point on the way down (same as normal)
+2. **Key releases** as soon as it moves **up** by a configurable distance (the rapid trigger sensitivity), regardless of absolute position
+3. **Key re-registers** as soon as it moves **down** by that same sensitivity distance after a release
+
+So if your rapid trigger sensitivity is set to 0.1mm:
+
+- Press the key down 1.5mm — it actuates
+- Let it rise just 0.1mm (to 1.4mm depth) — it releases
+- Press it back down 0.1mm (to 1.5mm depth) — it re-registers
+
+Compare that to a mechanical switch where you'd need to let the key rise from 1.5mm all the way up to around 0.5mm before it would reset. That's 1.0mm vs 0.1mm of upward travel before you can re-trigger. The time savings is significant at the speed competitive players operate.
+
+## Why This Matters for Counter-Strafing
+
+Counter-strafing is a fundamental technique in tactical shooters. When you're moving left (holding A) and want to stop to shoot, you tap the opposite key (D) to cancel your momentum instantly. The faster you release A and press D, the faster you stop, and the faster you can shoot accurately.
+
+With rapid trigger:
+- Release A by just 0.1mm — it deactivates immediately
+- The mechanical keyboard player next to you is still waiting for their key to travel back past the reset point
+
+This isn't theoretical. At high levels of Counter-Strike and Valorant, rapid trigger keyboards have become standard equipment. The advantage is small in absolute terms (we're talking single-digit milliseconds) but consistent, and in a game where advantages compound, it adds up.
+
+## How to Configure Rapid Trigger
+
+Most HE keyboards with rapid trigger expose two settings:
+
+### Actuation Point
+How far down the key must travel on the initial press to register. Set this based on your preference:
+- **0.1-0.5mm** — Hair-trigger. Fastest response, but easy to accidentally activate keys while resting fingers
+- **0.5-1.0mm** — Competitive sweet spot for most players
+- **1.0-2.0mm** — Closer to traditional mechanical feel, fewer accidental activations
+- **2.0-4.0mm** — Typing-optimized, rarely used for gaming
+
+### Rapid Trigger Sensitivity
+How far the key must move in the opposite direction to trigger a release or re-activation. Lower values = faster re-triggering but more susceptible to false triggers from vibration or light finger movement.
+- **0.1-0.2mm** — Maximum speed, might get false triggers
+- **0.2-0.5mm** — Good balance of speed and reliability
+- **0.5-1.0mm** — Conservative, very reliable, still faster than mechanical
+
+### Per-Key Configuration
+
+Many keyboards let you set different actuation and rapid trigger values per key. A common setup:
+
+- **WASD / movement keys** — 0.3mm actuation, 0.2mm rapid trigger sensitivity
+- **Typing keys** — 1.5-2.0mm actuation, rapid trigger off
+- **Modifier keys (Shift, Ctrl)** — 1.0mm actuation, rapid trigger off
+
+This gives you maximum speed where it matters without making everyday typing frustrating.
+
+## Common Misconceptions
+
+### "Rapid trigger gives you an unfair advantage"
+
+It's faster, but it's not aim assist. You still need the skill to counter-strafe properly, aim accurately, and make good decisions. It removes a hardware bottleneck — it doesn't add ability you don't have.
+
+### "You need the lowest possible sensitivity"
+
+Not necessarily. Setting rapid trigger sensitivity to 0.1mm means even the slightest finger movement can release a key. If you have a heavy typing style or tend to rest your fingers with pressure, you'll get phantom releases. Most competitive players settle around 0.2-0.3mm as the practical sweet spot.
+
+### "Rapid trigger helps in all games"
+
+It helps most in games where precise, fast key releases matter — primarily tactical FPS games with counter-strafing mechanics. In MOBAs, RPGs, strategy games, or platformers, rapid trigger provides minimal to no benefit. You won't WASD strafe better in Stardew Valley.
+
+### "Only expensive keyboards have rapid trigger"
+
+Budget HE keyboards like the [DrunkDeer A75](/reviews/keyboards/drunkdeer-a75) offer rapid trigger at under $80. The feature is inherent to hall effect sensing — any HE keyboard can implement it. The quality of implementation varies (some firmware is smoother than others), but the base capability is there across the price spectrum.
+
+## Rapid Trigger vs SOCD (Simultaneous Opposing Cardinal Direction)
+
+You'll often see SOCD discussed alongside rapid trigger. They're different features:
+
+- **Rapid trigger** — Faster key release and re-registration
+- **SOCD** — Determines what happens when you press two opposing directional keys simultaneously (e.g., A and D at the same time). Options are usually "last input wins," "neutral," or "first input wins"
+
+Some games have banned certain SOCD modes (notably Counter-Strike 2 banned "last input wins" SOCD in 2024). Rapid trigger itself is legal and accepted in all major competitive titles as of 2026.
+
+## Is Rapid Trigger Worth Switching Keyboards?
+
+If you play competitive FPS games seriously: yes, probably. The improvement is consistent and meaningful, and it won't go away — this is the direction keyboard technology is moving.
+
+If you play casually or primarily play non-FPS games: probably not worth buying a new keyboard specifically for this feature. If you're upgrading anyway, though, getting a keyboard with rapid trigger is a smart future-proofing move.
+
+## Recommended Reading
+
+- [What Is a Hall Effect Keyboard?](/learn/what-is-hall-effect) — Understand the technology that makes rapid trigger possible
+- [Analog Input Explained](/learn/analog-input-explained) — The other major HE feature: using keys like analog sticks
+- [HE Keyboard Buyer's Guide](/learn/he-keyboard-buyers-guide) — How to choose the right HE keyboard for your needs
+- [Best Hall Effect Keyboards](/guides/best-hall-effect-keyboards) — Our ranked picks for the best rapid trigger keyboards

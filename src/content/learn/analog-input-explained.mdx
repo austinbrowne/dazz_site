@@ -1,0 +1,101 @@
+---
+title: "Analog Input Explained"
+description: "How analog keyboard input works, which games support it, and whether it's worth caring about. A practical guide to analog WASD movement."
+order: 3
+section: "Hall Effect"
+---
+
+Analog input is one of those features that sounds incredible in theory — use your keyboard keys like analog sticks for variable-speed movement. In practice, it's a niche feature with specific use cases. Here's an honest breakdown of what it actually does and when it matters.
+
+## What Is Analog Input?
+
+On a normal keyboard, every key is binary: pressed or not pressed. When you hold W to walk forward in a game, your character moves at full speed. There's no "press W gently to walk slowly" — you're either at 100% or 0%.
+
+Analog input changes that. Because [hall effect keyboards](/learn/what-is-hall-effect) measure the exact position of the key at all times (not just "is it past the actuation point"), they can report the depth of the keypress as a value between 0% and 100%.
+
+Press W down 25% of the way — your character moves at 25% speed. Press it 50% — 50% speed. Slam it all the way down — full speed. Release slightly — speed decreases proportionally.
+
+It works exactly like the analog stick on a gamepad controller, but mapped to your keyboard keys.
+
+## How It Works Technically
+
+Hall effect and [TMR switches](/learn/what-is-tmr) continuously measure the distance between the magnet (on the switch stem) and the sensor (on the PCB). The firmware converts this distance into an analog value:
+
+- **Key at rest (0mm travel)** = 0% input
+- **Key at bottom (4mm travel)** = 100% input
+- **Any point in between** = proportional percentage
+
+The keyboard firmware maps this to a virtual analog axis (usually emulating an Xbox controller's left stick) and reports it to the game. The game sees a standard analog input, as if you were using a controller stick.
+
+Most keyboards let you configure:
+- **Dead zone** — How far you need to press before input starts registering (prevents accidental movement from resting fingers)
+- **Curve** — Linear mapping (1mm = 25%, 2mm = 50%) or custom curves (e.g., exponential for finer control at light presses)
+- **Key assignment** — Which keys get analog behavior (typically just WASD for movement)
+
+## Where Analog Input Actually Helps
+
+### Racing Games
+
+This is the strongest use case. Racing games are designed around analog steering and throttle input. On a regular keyboard, you're either turning full-lock or straight — there's no gentle cornering. With analog WASD, pressing A/D partway gives you proportional steering, dramatically improving car control.
+
+If you play Forza, Gran Turismo, Assetto Corsa, or any sim racer primarily on keyboard, analog input is a genuine upgrade. It doesn't replace a dedicated steering wheel, but it's far closer to controller-quality steering than binary keyboard input.
+
+### Flight Simulators
+
+Same concept as racing — flight controls benefit from proportional input. Analog keyboard lets you make gentle pitch and roll adjustments instead of binary full-deflection inputs. Games like Microsoft Flight Simulator and DCS World benefit noticeably.
+
+### Third-Person Stealth / Exploration Games
+
+Games where you want to walk slowly (Metal Gear, Hitman, Elden Ring exploration sections) benefit from analog movement. Being able to creep forward at 20% speed without toggling a "walk" button is a small quality-of-life improvement.
+
+## Where It Doesn't Help
+
+### Competitive FPS Games
+
+Counter-Strike, Valorant, Apex Legends — in these games, you want binary movement. You're either strafing at full speed or stopped. Analog movement at 50% speed is a death sentence because you're moving too slowly to dodge but not stopped enough to aim accurately. Most competitive FPS players disable analog input entirely and use [rapid trigger](/learn/rapid-trigger-explained) instead.
+
+### MOBAs and Strategy Games
+
+League of Legends, Dota 2, Starcraft — these games use point-and-click movement, not WASD. Analog keyboard input is irrelevant.
+
+### Platformers
+
+Most platformers handle variable speed through button hold duration or separate walk/run buttons. Analog keyboard input either isn't supported or doesn't improve the experience meaningfully.
+
+## Game Compatibility
+
+This is the biggest caveat. Analog keyboard input works by emulating a controller analog stick. For this to work, the game needs to:
+
+1. **Accept mixed input** — Both keyboard/mouse and controller input simultaneously
+2. **Not conflict** — Some games switch entirely between "keyboard mode" and "controller mode," causing UI flickering or input drops when they detect both
+
+Most modern games handle this fine. Some older or poorly-implemented titles have issues. If a game supports controller and keyboard simultaneously (which most do in 2026), analog keyboard input will work.
+
+You don't need game-specific support — the keyboard handles the emulation at the hardware/driver level. The game just sees a controller stick alongside your keyboard and mouse input.
+
+## Configuration Tips
+
+If you want to try analog input:
+
+1. **Start with racing or flying games** — These show the benefit most clearly
+2. **Set a dead zone of 15-20%** — Prevents accidental movement from resting finger weight
+3. **Use a linear curve initially** — Easier to develop muscle memory
+4. **Only enable on WASD** — Other keys should stay in digital mode
+5. **Test in a low-stakes environment** — Practice before competitive play to find your preferred settings
+
+## Is Analog Input Worth It?
+
+**It depends entirely on what you play.**
+
+If you regularly play racing or flight games on keyboard and mouse, analog input is a meaningful upgrade that solves a real input limitation. It's one of the genuinely compelling reasons to buy an HE keyboard beyond rapid trigger.
+
+If you exclusively play competitive FPS games, analog input is irrelevant to you. Rapid trigger is what you want, and analog input is just a bonus feature you'll never enable.
+
+If you play a variety of genres, it's a nice-to-have. Being able to toggle analog input on for a racing session and off for FPS gaming is convenient.
+
+## Recommended Reading
+
+- [What Is a Hall Effect Keyboard?](/learn/what-is-hall-effect) — The technology that enables analog input
+- [Rapid Trigger Explained](/learn/rapid-trigger-explained) — The other headline HE feature, and more broadly useful
+- [HE Keyboard Buyer's Guide](/learn/he-keyboard-buyers-guide) — Choosing the right HE keyboard for your needs
+- [Best Hall Effect Keyboards](/guides/best-hall-effect-keyboards) — Our current top picks

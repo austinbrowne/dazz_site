@@ -1,0 +1,94 @@
+---
+title: "What Is a Hall Effect Keyboard?"
+description: "How hall effect keyboards work, why gamers care, and what makes them different from mechanical switches. A plain-language explainer."
+order: 1
+section: "Hall Effect"
+---
+
+If you've been shopping for a gaming keyboard recently, you've probably seen "hall effect" thrown around everywhere. It's not just marketing hype — hall effect switches represent a fundamentally different approach to how keyboards register your keypresses.
+
+## The Short Version
+
+A hall effect keyboard uses magnets and magnetic sensors instead of physical metal contacts to detect when you press a key. This means no mechanical contact point, which opens the door to features like rapid trigger, adjustable actuation, and analog input that traditional switches simply cannot do.
+
+## How Traditional Mechanical Switches Work
+
+In a standard mechanical keyboard (Cherry MX, Gateron, Kailh, etc.), pressing a key pushes two metal contact leaves together. When they touch, the circuit closes, and the keyboard registers the keypress. When you release, a spring pushes the stem back up and the contacts separate.
+
+This system works well and has for decades. But the physical contact point creates inherent limitations:
+
+- **Fixed actuation point** — The key registers at a specific, unchangeable distance (typically around 2.0mm)
+- **Fixed reset point** — The key must travel back past a reset point before it can register again (hysteresis)
+- **Wear over time** — Metal contacts degrade with use, though modern switches last tens of millions of presses
+- **Binary input** — The key is either pressed or not. There's no in-between.
+
+## How Hall Effect Switches Work
+
+Hall effect switches replace the metal contacts with a magnet attached to the switch stem and a hall effect sensor on the PCB (circuit board) below.
+
+As you press the key, the magnet moves closer to the sensor. The sensor measures the strength of the magnetic field, which changes proportionally with distance. The keyboard's firmware reads this magnetic field strength and determines whether the key should be registered.
+
+Here's what that looks like in practice:
+
+- **Key at rest** — Magnet is far from sensor, weak field reading
+- **Key partially pressed** — Magnet is closer, moderate field reading
+- **Key fully pressed** — Magnet is closest, strong field reading
+
+Because the sensor measures a continuous analog value (not just "contact" or "no contact"), the keyboard firmware can set the actuation point at any depth. Press the key 0.5mm and it registers. Or 1.0mm. Or 3.5mm. You choose.
+
+## Why Gamers Care
+
+The analog sensing enables several features that competitive gamers find genuinely useful:
+
+### Adjustable Actuation
+
+Set exactly how far you need to press before a key registers. Most HE keyboards let you adjust from around 0.1mm to 4.0mm in fine increments. Lighter actuation means faster key registration. Deeper actuation means fewer accidental presses while typing.
+
+Many keyboards support per-key actuation, so you can set your WASD keys to 0.3mm for fast strafing while keeping your typing keys at a more comfortable 2.0mm.
+
+### Rapid Trigger
+
+This is the flagship feature that drove HE keyboards into the mainstream. Read the full breakdown in our [Rapid Trigger Explained](/learn/rapid-trigger-explained) article.
+
+In short: traditional switches need to travel past a fixed reset point before they can re-trigger. Rapid trigger removes that requirement. The key can re-register as soon as you start pressing again, regardless of where the reset point would normally be. This makes counter-strafing in games like Counter-Strike and Valorant measurably faster.
+
+### Analog Input
+
+Because the sensor reads a continuous value, some HE keyboards can report partial key presses to your games — similar to how an analog stick works. Push a key halfway for slow movement, all the way for full speed. This is useful for racing games and flight simulators. See our [Analog Input Explained](/learn/analog-input-explained) article for details.
+
+### Durability
+
+No metal contacts means no contact degradation. The magnet and sensor have essentially unlimited lifespan. The spring and housing will wear out long before the sensing mechanism does.
+
+## The Tradeoffs
+
+HE keyboards aren't a strict upgrade over mechanical in every dimension:
+
+- **Price** — HE keyboards typically cost $30-80 more than comparable mechanical boards
+- **Switch ecosystem** — Fewer switch options compared to the massive MX-compatible market. You can't swap in your favorite Cherry or Gateron switches.
+- **Sound and feel** — Subjective, but some people prefer the tactile feedback of mechanical switches. HE switches are generally linear (smooth press with no bump).
+- **Software dependency** — Many HE features require manufacturer software to configure. Software quality varies significantly between brands.
+- **Overkill for non-gaming** — If you don't play competitive FPS games, adjustable actuation and rapid trigger provide minimal benefit for general typing.
+
+## Who Should Get an HE Keyboard?
+
+**Strong yes:**
+- Competitive FPS players (Counter-Strike, Valorant, Apex Legends)
+- Players who want rapid trigger for faster counter-strafing
+- Anyone curious about analog keyboard input for racing/sim games
+
+**Probably not worth it:**
+- Pure typists with no gaming interest
+- Anyone happy with their current mechanical keyboard
+- Budget-constrained buyers (a good mechanical keyboard at $60 beats a mediocre HE keyboard at $100)
+
+## What About TMR?
+
+TMR (Tunneling Magneto-Resistance) is the next evolution of magnetic keyboard sensing. It uses a different type of sensor that promises even higher precision than hall effect. Read our [What Is TMR?](/learn/what-is-tmr) article for the full comparison.
+
+## Recommended Reading
+
+- [Rapid Trigger Explained](/learn/rapid-trigger-explained) — Deep dive into the feature that made HE keyboards mainstream
+- [Analog Input Explained](/learn/analog-input-explained) — How analog keyboard input works and which games support it
+- [Hall Effect vs TMR](/learn/hall-effect-vs-tmr) — How the two magnetic sensing technologies compare
+- [Best Hall Effect Keyboards](/guides/best-hall-effect-keyboards) — Our ranked picks for the best HE keyboards you can buy
