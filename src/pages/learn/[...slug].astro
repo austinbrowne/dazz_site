@@ -1,0 +1,34 @@
+---
+import { getCollection, render } from 'astro:content';
+import LearnLayout from '../../layouts/LearnLayout.astro';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('learn');
+
+  if (articles.length === 0) {
+    console.warn('getStaticPaths: No learn articles found in content collection — no learn pages will be generated');
+    return [];
+  }
+
+  return articles.map((article) => ({
+    params: { slug: article.id },
+    props: { article },
+  }));
+}
+
+interface Props {
+  article: Awaited<ReturnType<typeof getCollection<'learn'>>>[number];
+}
+
+const { article } = Astro.props;
+
+const { Content } = await render(article);
+---
+
+<LearnLayout
+  title={article.data.title}
+  description={article.data.description}
+  currentSlug={article.id}
+>
+  <Content />
+</LearnLayout>
