@@ -4,6 +4,8 @@ import PickCard from '../../../components/PickCard.astro';
 import EmptyState from '../../../components/EmptyState.astro';
 import { getProducts } from '../../../lib/api';
 import { CATEGORY_LABELS, CATEGORY_SLUGS } from '../../../lib/types';
+import { SURFACE_TYPES, MOUSEPAD_SIZES, resolveMousepadSpecs } from '../../../lib/mousepad-filters';
+import type { Product } from '../../../lib/types';
 
 export async function getStaticPaths() {
   const products = await getProducts();
@@ -34,6 +36,15 @@ const { categorySlug, products } = Astro.props;
 const categoryLabel = CATEGORY_LABELS[categorySlug];
 const pageTitle = `${categoryLabel} Reviews`;
 const pageDescription = `Browse our ${categoryLabel.toLowerCase()} reviews.`;
+const isMousepads = categorySlug === 'mousepads';
+
+// Pre-compute mousepad specs at build time for data attributes
+const mousepadSpecsMap = new Map<number, ReturnType<typeof resolveMousepadSpecs>>();
+if (isMousepads) {
+  for (const product of products) {
+    mousepadSpecsMap.set(product.id, resolveMousepadSpecs(product));
+  }
+}
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription}>
@@ -73,12 +84,301 @@ const pageDescription = `Browse our ${categoryLabel.toLowerCase()} reviews.`;
       </a>
     )}
 
-    {products.length > 0 ? (
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((product) => (
-          <PickCard product={product} />
-        ))}
+    {/* Mousepad-specific filter panel */}
+    {isMousepads && products.length > 0 && (
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6" data-mousepad-filters>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <fieldset>
+            <legend class="text-xs font-semibold text-zinc-400 mb-2">Surface Type</legend>
+            <select
+              data-filter-surface
+              class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-300 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">Any</option>
+              {SURFACE_TYPES.map((type) => (
+                <option value={type.toLowerCase()}>{type}</option>
+              ))}
+            </select>
+          </fieldset>
+
+          <fieldset>
+            <legend class="text-xs font-semibold text-zinc-400 mb-2">Size</legend>
+            <select
+              data-filter-size
+              class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-300 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">Any</option>
+              {MOUSEPAD_SIZES.map((size) => (
+                <option value={size.toLowerCase()}>{size}</option>
+              ))}
+            </select>
+          </fieldset>
+
+          <fieldset>
+            <legend class="text-xs font-semibold text-zinc-400 mb-2">Min Speed Rating</legend>
+            <select
+              data-filter-speed
+              class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-300 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="0">Any</option>
+              <option value="3">3+</option>
+              <option value="5">5+</option>
+              <option value="7">7+</option>
+              <option value="9">9+</option>
+            </select>
+          </fieldset>
+
+          <fieldset>
+            <legend class="text-xs font-semibold text-zinc-400 mb-2">Min Control Rating</legend>
+            <select
+              data-filter-control
+              class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-300 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="0">Any</option>
+              <option value="3">3+</option>
+              <option value="5">5+</option>
+              <option value="7">7+</option>
+              <option value="9">9+</option>
+            </select>
+          </fieldset>
+        </div>
+
+        <!-- View toggle + status row -->
+        <div class="flex items-center justify-between">
+          <div data-mousepad-status aria-live="polite" aria-atomic="true" class="text-sm text-zinc-400">
+            Showing {products.length} of {products.length} mousepads
+          </div>
+
+          <div class="flex items-center gap-1 bg-zinc-800 rounded-lg p-0.5" role="radiogroup" aria-label="View mode">
+            <button
+              type="button"
+              data-view-grid
+              class="px-3 py-1.5 text-xs font-medium rounded-md bg-indigo-600 text-white transition-colors"
+              role="radio"
+              aria-checked="true"
+            >
+              <span class="sr-only">Grid</span>
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              data-view-table
+              class="px-3 py-1.5 text-xs font-medium rounded-md text-zinc-400 hover:text-white transition-colors"
+              role="radio"
+              aria-checked="false"
+            >
+              <span class="sr-only">Table</span>
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M3 6h18M3 18h18" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
+    )}
+
+    {products.length > 0 ? (
+      <>
+        {/* Grid view (default for all categories, toggle-able for mousepads) */}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-mousepad-grid>
+          {products.map((product) => {
+            const specs = isMousepads ? mousepadSpecsMap.get(product.id) : null;
+            return (
+              <div
+                data-mousepad-item
+                data-surface={specs?.surface_type?.toLowerCase() ?? ''}
+                data-size={specs?.size?.toLowerCase() ?? ''}
+                data-speed={specs?.speed_rating ?? ''}
+                data-control={specs?.control_rating ?? ''}
+              >
+                <PickCard product={product} />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Table view (mousepads only, hidden by default) */}
+        {isMousepads && (
+          <div class="hidden" data-mousepad-table-wrapper>
+            <div class="relative overflow-x-auto rounded-xl border border-zinc-800">
+              <table class="w-full text-sm text-left" data-mousepad-table>
+                <thead class="text-xs uppercase text-zinc-400 bg-zinc-900 border-b border-zinc-800">
+                  <tr>
+                    <th
+                      scope="col"
+                      class="px-4 py-3 sticky left-0 z-10 bg-zinc-900 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                      data-sort-key="name"
+                      data-sort-type="string"
+                      aria-sort="none"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        Name
+                        <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                      </span>
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                      data-sort-key="surface"
+                      data-sort-type="string"
+                      aria-sort="none"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        Surface
+                        <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                      </span>
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                      data-sort-key="speed"
+                      data-sort-type="number"
+                      aria-sort="none"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        Speed
+                        <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                      </span>
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                      data-sort-key="control"
+                      data-sort-type="number"
+                      aria-sort="none"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        Control
+                        <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                      </span>
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                      data-sort-key="size"
+                      data-sort-type="string"
+                      aria-sort="none"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        Size
+                        <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                      </span>
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                      data-sort-key="thickness"
+                      data-sort-type="string"
+                      aria-sort="none"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        Thickness
+                        <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                      </span>
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                      data-sort-key="price"
+                      data-sort-type="number"
+                      aria-sort="none"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        Price
+                        <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                      </span>
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                      data-sort-key="rating"
+                      data-sort-type="number"
+                      aria-sort="descending"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        Rating
+                        <span class="text-indigo-400" data-sort-arrow aria-hidden="true">&#9660;</span>
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800">
+                  {products.map((product) => {
+                    const specs = mousepadSpecsMap.get(product.id);
+                    const surfaceType = specs?.surface_type || '';
+                    const speedRating = specs?.speed_rating ?? 0;
+                    const controlRating = specs?.control_rating ?? 0;
+                    const size = specs?.size || '';
+                    const thickness = specs?.thickness || '';
+                    const price = product.retail_price != null && Number.isFinite(product.retail_price) && product.retail_price > 0 ? product.retail_price : null;
+                    const rating = product.rating != null && Number.isFinite(product.rating) ? Math.min(Math.max(product.rating, 0), 10) : null;
+
+                    return (
+                      <tr
+                        class="bg-zinc-950 hover:bg-zinc-900 transition-colors"
+                        data-mousepad-row
+                        data-surface={surfaceType.toLowerCase()}
+                        data-size={size.toLowerCase()}
+                        data-speed={speedRating}
+                        data-control={controlRating}
+                      >
+                        <td
+                          class="px-4 py-3 sticky left-0 z-10 bg-zinc-950 font-medium text-white whitespace-nowrap"
+                          data-sort-value={product.product_name.toLowerCase()}
+                        >
+                          <a
+                            href={`/reviews/mousepads/${product.slug}`}
+                            class="hover:text-indigo-400 transition-colors"
+                          >
+                            {product.product_name}
+                          </a>
+                        </td>
+                        <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={surfaceType.toLowerCase()}>
+                          {surfaceType || <span class="text-zinc-600">--</span>}
+                        </td>
+                        <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={speedRating}>
+                          {speedRating > 0 ? `${speedRating}/10` : <span class="text-zinc-600">--</span>}
+                        </td>
+                        <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={controlRating}>
+                          {controlRating > 0 ? `${controlRating}/10` : <span class="text-zinc-600">--</span>}
+                        </td>
+                        <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={size.toLowerCase()}>
+                          {size || <span class="text-zinc-600">--</span>}
+                        </td>
+                        <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={thickness.toLowerCase()}>
+                          {thickness || <span class="text-zinc-600">--</span>}
+                        </td>
+                        <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={price ?? ''}>
+                          {price != null ? `$${price.toFixed(2)}` : <span class="text-zinc-600">--</span>}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap" data-sort-value={rating ?? ''}>
+                          {rating != null ? (
+                            <span class="font-bold text-indigo-400">{rating}/10</span>
+                          ) : (
+                            <span class="text-zinc-600">--</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* No results message (hidden by default, shown by JS when filters match nothing) */}
+        {isMousepads && (
+          <div data-mousepad-no-results class="hidden text-center py-12">
+            <p class="text-zinc-400">No mousepads match your filters.</p>
+            <button data-mousepad-reset class="mt-4 text-sm text-indigo-400 hover:text-indigo-300 transition-colors underline">
+              Reset filters
+            </button>
+          </div>
+        )}
+      </>
     ) : (
       <EmptyState
         title={`No ${categoryLabel.toLowerCase()} reviews yet`}
@@ -88,4 +388,278 @@ const pageDescription = `Browse our ${categoryLabel.toLowerCase()} reviews.`;
       />
     )}
   </div>
+
+  {/* Mousepad filter + view toggle + table sort JS */}
+  {isMousepads && products.length > 0 && (
+    <script>
+      function initMousepadFilters() {
+        const filterPanel = document.querySelector('[data-mousepad-filters]');
+        if (!filterPanel) return;
+
+        const gridEl = document.querySelector<HTMLElement>('[data-mousepad-grid]');
+        const tableWrapperEl = document.querySelector<HTMLElement>('[data-mousepad-table-wrapper]');
+        const statusEl = document.querySelector('[data-mousepad-status]');
+        const noResultsEl = document.querySelector('[data-mousepad-no-results]');
+
+        const gridItems = document.querySelectorAll<HTMLElement>('[data-mousepad-item]');
+        const tableRows = document.querySelectorAll<HTMLTableRowElement>('[data-mousepad-row]');
+        const totalCount = gridItems.length;
+
+        const surfaceSelect = filterPanel.querySelector<HTMLSelectElement>('[data-filter-surface]');
+        const sizeSelect = filterPanel.querySelector<HTMLSelectElement>('[data-filter-size]');
+        const speedSelect = filterPanel.querySelector<HTMLSelectElement>('[data-filter-speed]');
+        const controlSelect = filterPanel.querySelector<HTMLSelectElement>('[data-filter-control]');
+
+        const gridBtn = filterPanel.querySelector<HTMLButtonElement>('[data-view-grid]');
+        const tableBtn = filterPanel.querySelector<HTMLButtonElement>('[data-view-table]');
+
+        let currentView: 'grid' | 'table' = 'grid';
+
+        // --- View Toggle ---
+        function setView(view: 'grid' | 'table') {
+          currentView = view;
+          if (gridEl && tableWrapperEl) {
+            gridEl.classList.toggle('hidden', view === 'table');
+            tableWrapperEl.classList.toggle('hidden', view === 'grid');
+          }
+          if (gridBtn && tableBtn) {
+            if (view === 'grid') {
+              gridBtn.classList.add('bg-indigo-600', 'text-white');
+              gridBtn.classList.remove('text-zinc-400');
+              gridBtn.setAttribute('aria-checked', 'true');
+              tableBtn.classList.remove('bg-indigo-600', 'text-white');
+              tableBtn.classList.add('text-zinc-400');
+              tableBtn.setAttribute('aria-checked', 'false');
+            } else {
+              tableBtn.classList.add('bg-indigo-600', 'text-white');
+              tableBtn.classList.remove('text-zinc-400');
+              tableBtn.setAttribute('aria-checked', 'true');
+              gridBtn.classList.remove('bg-indigo-600', 'text-white');
+              gridBtn.classList.add('text-zinc-400');
+              gridBtn.setAttribute('aria-checked', 'false');
+            }
+          }
+          // Persist view to URL
+          const params = new URLSearchParams(location.search);
+          if (view === 'table') {
+            params.set('view', 'table');
+          } else {
+            params.delete('view');
+          }
+          const qs = params.toString();
+          history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+        }
+
+        gridBtn?.addEventListener('click', () => setView('grid'));
+        tableBtn?.addEventListener('click', () => setView('table'));
+
+        // --- Filtering ---
+        function getFilterState() {
+          return {
+            surface: surfaceSelect?.value ?? '',
+            size: sizeSelect?.value ?? '',
+            minSpeed: parseFloat(speedSelect?.value ?? '0') || 0,
+            minControl: parseFloat(controlSelect?.value ?? '0') || 0,
+          };
+        }
+
+        function matchesFilters(el: HTMLElement): boolean {
+          const { surface, size, minSpeed, minControl } = getFilterState();
+
+          if (surface && (el.dataset.surface ?? '') !== surface) return false;
+          if (size && (el.dataset.size ?? '') !== size) return false;
+
+          const speed = parseFloat(el.dataset.speed ?? '0') || 0;
+          if (minSpeed > 0 && speed < minSpeed) return false;
+
+          const control = parseFloat(el.dataset.control ?? '0') || 0;
+          if (minControl > 0 && control < minControl) return false;
+
+          return true;
+        }
+
+        function applyFilters() {
+          let visible = 0;
+
+          // Filter grid items
+          gridItems.forEach((item) => {
+            const show = matchesFilters(item);
+            item.classList.toggle('hidden', !show);
+            if (show) visible++;
+          });
+
+          // Filter table rows
+          tableRows.forEach((row) => {
+            const show = matchesFilters(row);
+            row.classList.toggle('hidden', !show);
+          });
+
+          // Update status text
+          if (statusEl) {
+            statusEl.textContent = `Showing ${visible} of ${totalCount} mousepads`;
+          }
+
+          // Toggle no-results message
+          if (noResultsEl) {
+            noResultsEl.classList.toggle('hidden', visible > 0);
+          }
+
+          // Hide the active view container when nothing matches
+          if (gridEl && currentView === 'grid') {
+            gridEl.classList.toggle('hidden', visible === 0);
+          }
+          if (tableWrapperEl && currentView === 'table') {
+            tableWrapperEl.classList.toggle('hidden', visible === 0);
+          }
+
+          // Persist filters to URL
+          const { surface, size, minSpeed, minControl } = getFilterState();
+          const params = new URLSearchParams(location.search);
+          surface ? params.set('surface', surface) : params.delete('surface');
+          size ? params.set('size', size) : params.delete('size');
+          minSpeed > 0 ? params.set('speed', String(minSpeed)) : params.delete('speed');
+          minControl > 0 ? params.set('control', String(minControl)) : params.delete('control');
+          const qs = params.toString();
+          history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+        }
+
+        function resetFilters() {
+          if (surfaceSelect) surfaceSelect.value = '';
+          if (sizeSelect) sizeSelect.value = '';
+          if (speedSelect) speedSelect.value = '0';
+          if (controlSelect) controlSelect.value = '0';
+          applyFilters();
+        }
+
+        // Restore state from URL
+        function restoreFromURL() {
+          const params = new URLSearchParams(location.search);
+
+          const surface = params.get('surface');
+          if (surface && surfaceSelect) surfaceSelect.value = surface;
+
+          const size = params.get('size');
+          if (size && sizeSelect) sizeSelect.value = size;
+
+          const speed = params.get('speed');
+          if (speed && speedSelect) speedSelect.value = speed;
+
+          const control = params.get('control');
+          if (control && controlSelect) controlSelect.value = control;
+
+          const view = params.get('view');
+          if (view === 'table') {
+            setView('table');
+          }
+        }
+
+        // Event listeners for filter changes
+        surfaceSelect?.addEventListener('change', applyFilters);
+        sizeSelect?.addEventListener('change', applyFilters);
+        speedSelect?.addEventListener('change', applyFilters);
+        controlSelect?.addEventListener('change', applyFilters);
+        document.querySelector('[data-mousepad-reset]')?.addEventListener('click', resetFilters);
+
+        // --- Table sorting (reuses compare.astro pattern) ---
+        const table = document.querySelector<HTMLTableElement>('[data-mousepad-table]');
+        if (table) {
+          const thead = table.querySelector('thead');
+          const tbody = table.querySelector('tbody');
+
+          if (thead && tbody) {
+            const headers = thead.querySelectorAll<HTMLElement>('th[data-sort-key]');
+            let currentKey = 'rating';
+            let currentDir: 'asc' | 'desc' = 'desc';
+
+            function sortTable(key: string, type: string) {
+              if (key === currentKey) {
+                currentDir = currentDir === 'asc' ? 'desc' : 'asc';
+              } else {
+                currentDir = type === 'number' ? 'desc' : 'asc';
+              }
+              currentKey = key;
+
+              const rows = Array.from(tbody!.querySelectorAll<HTMLTableRowElement>('[data-mousepad-row]'));
+              const colIndex = Array.from(headers).findIndex((h) => h.dataset.sortKey === key);
+              if (colIndex < 0) return;
+
+              rows.sort((a, b) => {
+                const cellA = a.cells[colIndex];
+                const cellB = b.cells[colIndex];
+                if (!cellA || !cellB) return 0;
+
+                const valA = cellA.dataset.sortValue ?? '';
+                const valB = cellB.dataset.sortValue ?? '';
+
+                // Empty values sort to bottom regardless of direction
+                if (valA === '' && valB === '') return 0;
+                if (valA === '') return 1;
+                if (valB === '') return -1;
+
+                let cmp: number;
+                if (type === 'number') {
+                  cmp = parseFloat(valA) - parseFloat(valB);
+                } else {
+                  cmp = valA.localeCompare(valB);
+                }
+
+                return currentDir === 'asc' ? cmp : -cmp;
+              });
+
+              rows.forEach((row) => tbody!.appendChild(row));
+
+              // Update aria-sort and arrows
+              headers.forEach((h) => {
+                const arrow = h.querySelector('[data-sort-arrow]');
+                if (h.dataset.sortKey === key) {
+                  h.setAttribute('aria-sort', currentDir === 'asc' ? 'ascending' : 'descending');
+                  if (arrow) {
+                    arrow.textContent = currentDir === 'asc' ? '\u25B2' : '\u25BC';
+                    arrow.className = 'text-indigo-400';
+                  }
+                } else {
+                  h.setAttribute('aria-sort', 'none');
+                  if (arrow) {
+                    arrow.textContent = '';
+                    arrow.className = 'text-zinc-600';
+                  }
+                }
+              });
+            }
+
+            headers.forEach((header) => {
+              header.addEventListener('click', () => {
+                const key = header.dataset.sortKey;
+                const type = header.dataset.sortType || 'string';
+                if (key) sortTable(key, type);
+              });
+
+              header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  const key = header.dataset.sortKey;
+                  const type = header.dataset.sortType || 'string';
+                  if (key) sortTable(key, type);
+                }
+              });
+
+              header.setAttribute('tabindex', '0');
+              header.setAttribute('role', 'columnheader');
+            });
+          }
+        }
+
+        // Initialize
+        restoreFromURL();
+        applyFilters();
+      }
+
+      // Run on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMousepadFilters);
+      } else {
+        initMousepadFilters();
+      }
+    </script>
+  )}
 </BaseLayout>
