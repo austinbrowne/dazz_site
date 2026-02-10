@@ -1,5 +1,6 @@
 ---
 import { getProductBySlug } from '../lib/api';
+import { safeUrl } from '../lib/url-utils';
 
 interface Props {
   /** Product slug to resolve at build time */
@@ -8,13 +9,6 @@ interface Props {
 
 const { slug } = Astro.props;
 const product = await getProductBySlug(slug);
-
-/** Validate an external URL: must parse and use https: protocol */
-function safeUrl(raw: string | null): string | null {
-  if (!raw) return null;
-  try { return new URL(raw).protocol === 'https:' ? raw : null; }
-  catch { return null; }
-}
 
 const safeAffiliate = product ? safeUrl(product.affiliate_link) : null;
 const safeWebsite = product ? safeUrl(product.company_website) : null;
@@ -82,7 +76,7 @@ const clampedRating = product?.rating != null
               {clampedRating}/10
             </span>
           )}
-          {product.retail_price != null && product.retail_price > 0 && (
+          {product.retail_price != null && Number.isFinite(product.retail_price) && product.retail_price > 0 && (
             <span class="text-sm font-semibold text-white">
               ${product.retail_price.toFixed(2)}
             </span>

@@ -38,7 +38,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     console.error(`Invalid slug: ${slug}`);
     return null;
   }
-  return apiFetch<Product>(`/products/${encodeURIComponent(slug)}`);
+  const all = await getProducts();
+  return all.find(p => p.slug === slug) ?? null;
 }
 
 export async function getPicks(): Promise<Product[]> {

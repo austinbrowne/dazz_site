@@ -257,7 +257,12 @@ function getMouseSpecs(product: (typeof mice)[0]): MouseSpecs {
 
             let cmp: number;
             if (type === 'number') {
-              cmp = parseFloat(valA) - parseFloat(valB);
+              const numA = parseFloat(valA);
+              const numB = parseFloat(valB);
+              if (isNaN(numA) && isNaN(numB)) return 0;
+              if (isNaN(numA)) return 1;
+              if (isNaN(numB)) return -1;
+              cmp = numA - numB;
             } else {
               cmp = valA.localeCompare(valB);
             }

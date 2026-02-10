@@ -1,18 +1,12 @@
 ---
 import type { Product } from '../lib/types';
+import { safeUrl } from '../lib/url-utils';
 
 interface Props {
   product: Product;
 }
 
 const { product } = Astro.props;
-
-/** Validate an external URL: must parse and use https: protocol */
-function safeUrl(raw: string | null): string | null {
-  if (!raw) return null;
-  try { return new URL(raw).protocol === 'https:' ? raw : null; }
-  catch { return null; }
-}
 
 const safeAffiliate = safeUrl(product.affiliate_link);
 const safeWebsite = safeUrl(product.company_website);
@@ -21,7 +15,7 @@ const linkHref = safeAffiliate || safeWebsite || internalHref;
 const linkText = safeAffiliate ? 'Buy Now' : safeWebsite ? 'Check Price' : 'Read Review';
 const linkRel = safeAffiliate ? 'noopener noreferrer sponsored' : safeWebsite ? 'noopener noreferrer' : undefined;
 const linkTarget = (safeAffiliate || safeWebsite) ? '_blank' : undefined;
-const safeImageUrl = product.image_url?.startsWith('https://') ? product.image_url : null;
+const safeImageUrl = safeUrl(product.image_url);
 ---
 
 <article class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden flex flex-col hover:border-zinc-700 transition-colors">

@@ -1,18 +1,12 @@
 ---
 import type { Deal } from '../lib/types';
+import { safeUrl } from '../lib/url-utils';
 
 interface Props {
   deal: Deal;
 }
 
 const { deal } = Astro.props;
-
-/** Validate an external URL: must parse and use https: protocol */
-function safeUrl(raw: string | null): string | null {
-  if (!raw) return null;
-  try { return new URL(raw).protocol === 'https:' ? raw : null; }
-  catch { return null; }
-}
 
 /** Validate a date string and return a Date or null */
 function safeDate(raw: string | null | undefined): Date | null {
@@ -28,7 +22,9 @@ function formatDate(d: Date): string {
 
 const safeAffiliate = safeUrl(deal.affiliate_link);
 const safeImageUrl = safeUrl(deal.image_url);
-const reviewHref = deal.category_slug
+const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+const reviewHref = deal.category_slug && deal.product_slug
+  && SLUG_RE.test(deal.category_slug) && SLUG_RE.test(deal.product_slug)
   ? `/reviews/${deal.category_slug}/${deal.product_slug}`
   : null;
 
@@ -39,8 +35,9 @@ const endDate = safeDate(deal.end_date);
 const salePrice = Number.isFinite(deal.sale_price) ? deal.sale_price : 0;
 const normalPrice = Number.isFinite(deal.normal_price) ? deal.normal_price : 0;
 
-// Calculate savings
-const savings = normalPrice > 0
+// Calculate savings — suppress misleading display when sale >= normal
+const hasSavings = normalPrice > 0 && salePrice < normalPrice;
+const savings = hasSavings
   ? Math.round(((normalPrice - salePrice) / normalPrice) * 100)
   : 0;
 const clampedSavings = Math.max(0, Math.min(100, savings));
@@ -96,13 +93,15 @@ const clampedSavings = Math.max(0, Math.min(100, savings));
       {expired ? (
         <>
           <span class="text-sm text-zinc-500 line-through">${salePrice.toFixed(2)}</span>
-          <span class="text-sm text-zinc-500 line-through">${normalPrice.toFixed(2)}</span>
+          {hasSavings && <span class="text-sm text-zinc-500 line-through">${normalPrice.toFixed(2)}</span>}
         </>
-      ) : (
+      ) : hasSavings ? (
         <>
           <span class="text-lg font-bold text-green-400">${salePrice.toFixed(2)}</span>
           <span class="text-sm text-zinc-500 line-through">${normalPrice.toFixed(2)}</span>
         </>
+      ) : (
+        <span class="text-lg font-bold text-white">${salePrice.toFixed(2)}</span>
       )}
     </div>
 
