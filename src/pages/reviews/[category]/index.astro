@@ -50,6 +50,29 @@ const pageDescription = `Browse our ${categoryLabel.toLowerCase()} reviews.`;
     <h1 class="text-3xl font-bold text-white mb-2">{categoryLabel} Reviews</h1>
     <p class="text-zinc-400 mb-8">{products.length} {products.length === 1 ? 'review' : 'reviews'}</p>
 
+    {/* Compare Mice link card — only shown on the mice category page */}
+    {categorySlug === 'mice' && products.length > 0 && (
+      <a
+        href="/compare"
+        class="group flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-8 hover:border-indigo-500/50 hover:bg-zinc-900/80 transition-colors"
+      >
+        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h4V3H3v7zm7 11h4V6h-4v15zm7-7h4v-4h-4v4z" />
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">Compare Mice</span>
+          <p class="text-xs text-zinc-400 mt-0.5">
+            Side-by-side specs table — sort by weight, sensor, price, and more
+          </p>
+        </div>
+        <svg class="w-5 h-5 text-zinc-600 group-hover:text-indigo-400 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    )}
+
     {products.length > 0 ? (
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map((product) => (
