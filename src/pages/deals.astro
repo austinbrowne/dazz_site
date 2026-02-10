@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import DealCard from '../components/DealCard.astro';
+import EmptyState from '../components/EmptyState.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
+import { getDeals } from '../lib/api';
+
+const allDeals = await getDeals();
+
+const now = new Date();
+const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+/** Partition deals into active and recently-expired buckets */
+const activeDeals = allDeals.filter(d => d.is_active);
+
+const recentlyExpired = allDeals.filter(d => {
+  if (d.is_active) return false;
+  const endDate = new Date(d.end_date);
+  // Only include expired deals whose end_date is valid and within the last 7 days
+  return !isNaN(endDate.getTime()) && endDate >= sevenDaysAgo;
+});
+
+const hasAnyDeals = activeDeals.length > 0 || recentlyExpired.length > 0;
+const hasAffiliateLinks = allDeals.some(d => d.affiliate_link);
+---
+
+<BaseLayout title="Deals" description="Current deals and discounts on gaming mice, keyboards, mousepads, and IEMs. Save on top-rated peripherals.">
+  <section class="max-w-6xl mx-auto px-4 py-16">
+    <h1 class="text-3xl font-bold text-white mb-2">Deals</h1>
+    <p class="text-zinc-400 mb-8">Current deals and discounts on gaming peripherals.</p>
+
+    {hasAnyDeals ? (
+      <div class="space-y-12">
+        {hasAffiliateLinks && <AffiliateDisclosure />}
+
+        {/* Active deals */}
+        {activeDeals.length > 0 && (
+          <div>
+            <h2 class="text-xl font-bold text-white mb-4">
+              Active Deals
+              <span class="ml-2 text-sm font-normal text-zinc-500">({activeDeals.length})</span>
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {activeDeals.map(deal => (
+                <DealCard deal={deal} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recently expired deals */}
+        {recentlyExpired.length > 0 && (
+          <div>
+            <h2 class="text-xl font-bold text-zinc-400 mb-4">
+              Recently Expired
+              <span class="ml-2 text-sm font-normal text-zinc-500">({recentlyExpired.length})</span>
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recentlyExpired.map(deal => (
+                <DealCard deal={deal} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div class="max-w-xl">
+          <NewsletterSignup />
+        </div>
+      </div>
+    ) : (
+      <div class="mt-8 space-y-8">
+        <EmptyState
+          title="No active deals right now"
+          description="Subscribe for deal alerts and be the first to know when prices drop on top-rated gaming peripherals."
+        />
+        <div class="max-w-xl mx-auto">
+          <NewsletterSignup />
+        </div>
+      </div>
+    )}
+  </section>
+</BaseLayout>
