@@ -1,0 +1,125 @@
+---
+import { getProductBySlug } from '../lib/api';
+
+interface Props {
+  /** Product slug to resolve at build time */
+  slug: string;
+}
+
+const { slug } = Astro.props;
+const product = await getProductBySlug(slug);
+
+/** Validate an external URL: must parse and use https: protocol */
+function safeUrl(raw: string | null): string | null {
+  if (!raw) return null;
+  try { return new URL(raw).protocol === 'https:' ? raw : null; }
+  catch { return null; }
+}
+
+const safeAffiliate = product ? safeUrl(product.affiliate_link) : null;
+const safeWebsite = product ? safeUrl(product.company_website) : null;
+const internalHref = product ? `/reviews/${product.category_slug ?? 'other'}/${product.slug}` : null;
+const linkHref = safeAffiliate || safeWebsite || internalHref;
+const linkText = safeAffiliate ? 'Buy Now' : safeWebsite ? 'Check Price' : 'Read Review';
+const linkRel = safeAffiliate ? 'noopener noreferrer sponsored' : safeWebsite ? 'noopener noreferrer' : undefined;
+const linkTarget = (safeAffiliate || safeWebsite) ? '_blank' : undefined;
+const safeImageUrl = product?.image_url?.startsWith('https://') ? product.image_url : null;
+
+/** Rating color map — explicit classes, no dynamic interpolation */
+const RATING_COLORS: Record<string, string> = {
+  great: 'text-green-400',
+  good: 'text-indigo-400',
+  average: 'text-yellow-400',
+  poor: 'text-red-400',
+};
+
+function getRatingColor(rating: number): string {
+  if (rating >= 8) return RATING_COLORS.great;
+  if (rating >= 6) return RATING_COLORS.good;
+  if (rating >= 4) return RATING_COLORS.average;
+  return RATING_COLORS.poor;
+}
+
+const clampedRating = product?.rating != null
+  ? Math.max(0, Math.min(10, product.rating))
+  : null;
+---
+
+{product ? (
+  <div class="not-prose my-6 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-700 transition-colors">
+    <div class="flex flex-col sm:flex-row">
+      {/* Image */}
+      <div class="sm:w-48 sm:shrink-0 aspect-square sm:aspect-auto bg-zinc-800 flex items-center justify-center overflow-hidden">
+        {safeImageUrl ? (
+          <img
+            src={safeImageUrl}
+            alt={product.product_name}
+            class="w-full h-full object-contain p-4"
+            loading="lazy"
+          />
+        ) : (
+          <svg class="w-12 h-12 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+          </svg>
+        )}
+      </div>
+
+      {/* Content */}
+      <div class="p-4 sm:p-5 flex flex-col flex-1 min-w-0">
+        {product.company_name && (
+          <p class="text-xs text-zinc-500 mb-1">{product.company_name}</p>
+        )}
+
+        <h3 class="text-base font-semibold text-white mb-1">
+          <a href={`/reviews/${product.category_slug ?? 'other'}/${product.slug}`} class="hover:text-indigo-400 transition-colors">
+            {product.product_name}
+          </a>
+        </h3>
+
+        <div class="flex items-center gap-3 mb-2">
+          {clampedRating != null && (
+            <span class={`text-sm font-bold ${getRatingColor(clampedRating)}`}>
+              {clampedRating}/10
+            </span>
+          )}
+          {product.retail_price != null && product.retail_price > 0 && (
+            <span class="text-sm font-semibold text-white">
+              ${product.retail_price.toFixed(2)}
+            </span>
+          )}
+        </div>
+
+        {product.short_verdict && (
+          <p class="text-sm text-zinc-400 mb-3 line-clamp-3">{product.short_verdict}</p>
+        )}
+
+        {linkHref && (
+          <div class="mt-auto flex items-center gap-3">
+            <a
+              href={linkHref}
+              target={linkTarget}
+              rel={linkRel}
+              class="inline-flex items-center text-sm font-medium px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md transition-colors"
+            >
+              {linkText}
+            </a>
+            {!safeAffiliate && (
+              <a
+                href={`/reviews/${product.category_slug ?? 'other'}/${product.slug}`}
+                class="text-sm text-zinc-400 hover:text-white transition-colors"
+              >
+                Read Review
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+) : (
+  <div class="not-prose my-6 bg-zinc-900/50 border border-zinc-800 border-dashed rounded-xl p-6 text-center">
+    <p class="text-sm text-zinc-500">
+      Product not found: <code class="text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded text-xs">{slug}</code>
+    </p>
+  </div>
+)}
