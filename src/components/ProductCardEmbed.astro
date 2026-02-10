@@ -23,7 +23,7 @@ const linkHref = safeAffiliate || safeWebsite || internalHref;
 const linkText = safeAffiliate ? 'Buy Now' : safeWebsite ? 'Check Price' : 'Read Review';
 const linkRel = safeAffiliate ? 'noopener noreferrer sponsored' : safeWebsite ? 'noopener noreferrer' : undefined;
 const linkTarget = (safeAffiliate || safeWebsite) ? '_blank' : undefined;
-const safeImageUrl = product?.image_url?.startsWith('https://') ? product.image_url : null;
+const safeImageUrl = product ? safeUrl(product.image_url) : null;
 
 /** Rating color map — explicit classes, no dynamic interpolation */
 const RATING_COLORS: Record<string, string> = {

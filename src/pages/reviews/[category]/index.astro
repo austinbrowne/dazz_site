@@ -5,7 +5,7 @@ import EmptyState from '../../../components/EmptyState.astro';
 import { getProducts } from '../../../lib/api';
 import { CATEGORY_LABELS, CATEGORY_SLUGS } from '../../../lib/types';
 import { SURFACE_TYPES, MOUSEPAD_SIZES, resolveMousepadSpecs } from '../../../lib/mousepad-filters';
-import type { Product } from '../../../lib/types';
+import type { Product, CategorySlug } from '../../../lib/types';
 
 export async function getStaticPaths() {
   const products = await getProducts();

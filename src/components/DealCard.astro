@@ -27,7 +27,7 @@ function formatDate(d: Date): string {
 }
 
 const safeAffiliate = safeUrl(deal.affiliate_link);
-const safeImageUrl = deal.image_url?.startsWith('https://') ? deal.image_url : null;
+const safeImageUrl = safeUrl(deal.image_url);
 const reviewHref = deal.category_slug
   ? `/reviews/${deal.category_slug}/${deal.product_slug}`
   : null;
@@ -35,9 +35,13 @@ const reviewHref = deal.category_slug
 const expired = !deal.is_active;
 const endDate = safeDate(deal.end_date);
 
+// Guard prices against NaN/Infinity from malformed API data
+const salePrice = Number.isFinite(deal.sale_price) ? deal.sale_price : 0;
+const normalPrice = Number.isFinite(deal.normal_price) ? deal.normal_price : 0;
+
 // Calculate savings
-const savings = deal.normal_price > 0
-  ? Math.round(((deal.normal_price - deal.sale_price) / deal.normal_price) * 100)
+const savings = normalPrice > 0
+  ? Math.round(((normalPrice - salePrice) / normalPrice) * 100)
   : 0;
 const clampedSavings = Math.max(0, Math.min(100, savings));
 ---
@@ -91,13 +95,13 @@ const clampedSavings = Math.max(0, Math.min(100, savings));
     <div class="flex items-baseline gap-2 mb-2">
       {expired ? (
         <>
-          <span class="text-sm text-zinc-500 line-through">${deal.sale_price.toFixed(2)}</span>
-          <span class="text-sm text-zinc-500 line-through">${deal.normal_price.toFixed(2)}</span>
+          <span class="text-sm text-zinc-500 line-through">${salePrice.toFixed(2)}</span>
+          <span class="text-sm text-zinc-500 line-through">${normalPrice.toFixed(2)}</span>
         </>
       ) : (
         <>
-          <span class="text-lg font-bold text-green-400">${deal.sale_price.toFixed(2)}</span>
-          <span class="text-sm text-zinc-500 line-through">${deal.normal_price.toFixed(2)}</span>
+          <span class="text-lg font-bold text-green-400">${salePrice.toFixed(2)}</span>
+          <span class="text-sm text-zinc-500 line-through">${normalPrice.toFixed(2)}</span>
         </>
       )}
     </div>
