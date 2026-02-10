@@ -1,0 +1,163 @@
+---
+import ArticleLayout from './ArticleLayout.astro';
+import { getCollection } from 'astro:content';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** The slug of the current article (used for sidebar highlighting) */
+  currentSlug: string;
+}
+
+const { title, description, currentSlug } = Astro.props;
+
+// Fetch all learn articles for sidebar navigation
+const allArticles = await getCollection('learn');
+
+// Group articles by section, then sort within each group by order
+const sectionMap = new Map<string, typeof allArticles>();
+
+for (const article of allArticles) {
+  const section = article.data.section;
+  if (!sectionMap.has(section)) {
+    sectionMap.set(section, []);
+  }
+  sectionMap.get(section)!.push(article);
+}
+
+// Sort articles within each section by order
+for (const articles of sectionMap.values()) {
+  articles.sort((a, b) => a.data.order - b.data.order);
+}
+
+// Sort sections alphabetically for consistent ordering
+const sections = [...sectionMap.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Learn', href: '/learn' },
+  { label: title },
+];
+---
+
+<ArticleLayout
+  title={title}
+  description={description}
+  breadcrumbs={breadcrumbs}
+>
+  {/* Sidebar navigation — mobile dropdown + desktop sidebar */}
+  <Fragment slot="sidebar">
+    {/* Mobile: collapsible dropdown (visible on small screens) */}
+    <div class="lg:hidden mb-6">
+      <button
+        id="learn-sidebar-toggle"
+        type="button"
+        class="w-full flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-sm font-medium text-white hover:border-zinc-700 transition-colors"
+        aria-expanded="false"
+        aria-controls="learn-sidebar-mobile"
+      >
+        <span>Browse articles</span>
+        <svg
+          class="w-4 h-4 text-zinc-400 transition-transform duration-200"
+          id="learn-sidebar-chevron"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <nav
+        id="learn-sidebar-mobile"
+        class="hidden mt-2 bg-zinc-900 border border-zinc-800 rounded-lg p-4"
+        aria-label="Learn articles"
+      >
+        {sections.map(([sectionName, articles]) => (
+          <div class="mb-4 last:mb-0">
+            <h3 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+              {sectionName}
+            </h3>
+            <ul class="space-y-1">
+              {articles.map((article) => {
+                const isActive = article.id === currentSlug;
+                return (
+                  <li>
+                    <a
+                      href={`/learn/${article.id}`}
+                      class:list={[
+                        'block text-sm px-3 py-1.5 rounded transition-colors',
+                        isActive
+                          ? 'bg-indigo-600/20 text-indigo-400 font-medium'
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-800',
+                      ]}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {article.data.title}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+    </div>
+
+    {/* Desktop: persistent sidebar (visible on large screens) */}
+    <nav
+      class="hidden lg:block sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto"
+      aria-label="Learn articles"
+    >
+      {sections.map(([sectionName, articles]) => (
+        <div class="mb-6 last:mb-0">
+          <h3 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+            {sectionName}
+          </h3>
+          <ul class="space-y-1">
+            {articles.map((article) => {
+              const isActive = article.id === currentSlug;
+              return (
+                <li>
+                  <a
+                    href={`/learn/${article.id}`}
+                    class:list={[
+                      'block text-sm px-3 py-1.5 rounded transition-colors',
+                      isActive
+                        ? 'bg-indigo-600/20 text-indigo-400 font-medium'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800',
+                    ]}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {article.data.title}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  </Fragment>
+
+  {/* Pass through the article content */}
+  <slot />
+</ArticleLayout>
+
+{/* Toggle script for mobile sidebar dropdown */}
+<script>
+  const toggle = document.getElementById('learn-sidebar-toggle');
+  const menu = document.getElementById('learn-sidebar-mobile');
+  const chevron = document.getElementById('learn-sidebar-chevron');
+
+  if (toggle && menu && chevron) {
+    toggle.addEventListener('click', () => {
+      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!isExpanded));
+      menu.classList.toggle('hidden');
+      chevron.style.transform = isExpanded ? '' : 'rotate(180deg)';
+    });
+  }
+</script>
