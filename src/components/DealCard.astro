@@ -1,0 +1,144 @@
+---
+import type { Deal } from '../lib/types';
+
+interface Props {
+  deal: Deal;
+}
+
+const { deal } = Astro.props;
+
+/** Validate an external URL: must parse and use https: protocol */
+function safeUrl(raw: string | null): string | null {
+  if (!raw) return null;
+  try { return new URL(raw).protocol === 'https:' ? raw : null; }
+  catch { return null; }
+}
+
+/** Validate a date string and return a Date or null */
+function safeDate(raw: string | null | undefined): Date | null {
+  if (!raw) return null;
+  const d = new Date(raw);
+  return !isNaN(d.getTime()) ? d : null;
+}
+
+/** Format a date for display (e.g., "Feb 9, 2026") */
+function formatDate(d: Date): string {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+const safeAffiliate = safeUrl(deal.affiliate_link);
+const safeImageUrl = deal.image_url?.startsWith('https://') ? deal.image_url : null;
+const reviewHref = deal.category_slug
+  ? `/reviews/${deal.category_slug}/${deal.product_slug}`
+  : null;
+
+const expired = !deal.is_active;
+const endDate = safeDate(deal.end_date);
+
+// Calculate savings
+const savings = deal.normal_price > 0
+  ? Math.round(((deal.normal_price - deal.sale_price) / deal.normal_price) * 100)
+  : 0;
+const clampedSavings = Math.max(0, Math.min(100, savings));
+---
+
+<article class:list={[
+  'bg-zinc-900 border rounded-xl overflow-hidden flex flex-col transition-colors',
+  expired ? 'border-zinc-800 opacity-60' : 'border-zinc-800 hover:border-zinc-700',
+]}>
+  {/* Image */}
+  <div class="aspect-[4/3] bg-zinc-800 flex items-center justify-center overflow-hidden relative">
+    {safeImageUrl ? (
+      <img
+        src={safeImageUrl}
+        alt={deal.product_name}
+        class:list={['w-full h-full object-contain p-4', expired && 'grayscale']}
+        loading="lazy"
+      />
+    ) : (
+      <svg class="w-16 h-16 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+      </svg>
+    )}
+
+    {/* Badges */}
+    {expired ? (
+      <span class="absolute top-2 right-2 bg-red-900/80 text-red-300 text-xs font-bold px-2 py-1 rounded">
+        Expired
+      </span>
+    ) : clampedSavings > 0 && (
+      <span class="absolute top-2 right-2 bg-green-900/80 text-green-300 text-xs font-bold px-2 py-1 rounded">
+        -{clampedSavings}%
+      </span>
+    )}
+  </div>
+
+  {/* Content */}
+  <div class="p-4 flex flex-col flex-1">
+    <p class="text-xs text-zinc-500 mb-1">{deal.retailer}</p>
+
+    <h3 class="text-sm font-semibold text-white mb-2 line-clamp-2">
+      {reviewHref ? (
+        <a href={reviewHref} class="hover:text-indigo-400 transition-colors">
+          {deal.product_name}
+        </a>
+      ) : (
+        deal.product_name
+      )}
+    </h3>
+
+    {/* Pricing */}
+    <div class="flex items-baseline gap-2 mb-2">
+      {expired ? (
+        <>
+          <span class="text-sm text-zinc-500 line-through">${deal.sale_price.toFixed(2)}</span>
+          <span class="text-sm text-zinc-500 line-through">${deal.normal_price.toFixed(2)}</span>
+        </>
+      ) : (
+        <>
+          <span class="text-lg font-bold text-green-400">${deal.sale_price.toFixed(2)}</span>
+          <span class="text-sm text-zinc-500 line-through">${deal.normal_price.toFixed(2)}</span>
+        </>
+      )}
+    </div>
+
+    {/* Expiration date */}
+    {endDate && (
+      <p class="text-xs text-zinc-500 mb-3">
+        {expired ? 'Expired' : 'Expires'}: {formatDate(endDate)}
+      </p>
+    )}
+
+    {/* Action button */}
+    <div class="mt-auto pt-2 border-t border-zinc-800">
+      {expired ? (
+        <span
+          class="inline-block w-full text-center text-xs font-medium px-3 py-1.5 bg-zinc-700 text-zinc-500 rounded-md cursor-not-allowed"
+          aria-disabled="true"
+        >
+          Deal Expired
+        </span>
+      ) : safeAffiliate ? (
+        <a
+          href={safeAffiliate}
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          class="inline-block w-full text-center text-xs font-medium px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-md transition-colors"
+        >
+          Get Deal
+        </a>
+      ) : reviewHref ? (
+        <a
+          href={reviewHref}
+          class="inline-block w-full text-center text-xs font-medium px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md transition-colors"
+        >
+          View Product
+        </a>
+      ) : (
+        <span class="inline-block w-full text-center text-xs font-medium px-3 py-1.5 bg-zinc-700 text-zinc-400 rounded-md">
+          No Link Available
+        </span>
+      )}
+    </div>
+  </div>
+</article>
