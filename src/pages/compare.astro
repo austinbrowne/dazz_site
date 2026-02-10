@@ -1,0 +1,321 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import EmptyState from '../components/EmptyState.astro';
+import { getProducts } from '../lib/api';
+import type { MouseSpecs } from '../lib/types';
+
+const allProducts = await getProducts();
+
+// Filter to mice category, sorted by rating descending
+const mice = allProducts
+  .filter((p) => p.category_slug === 'mice')
+  .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+
+const hasMice = mice.length > 0;
+
+/** Extract MouseSpecs safely, returning defaults for missing fields */
+function getMouseSpecs(product: (typeof mice)[0]): MouseSpecs {
+  const specs = product.specs as MouseSpecs | null;
+  return specs ?? {};
+}
+---
+
+<BaseLayout
+  title="Compare Gaming Mice"
+  description="Side-by-side comparison table of gaming mice — sort by weight, sensor, DPI, polling rate, price, and rating."
+>
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6">
+      <ol class="flex items-center gap-2 text-sm text-zinc-400">
+        <li><a href="/reviews" class="hover:text-white transition-colors">Reviews</a></li>
+        <li aria-hidden="true" class="text-zinc-600">/</li>
+        <li><a href="/reviews/mice" class="hover:text-white transition-colors">Mice</a></li>
+        <li aria-hidden="true" class="text-zinc-600">/</li>
+        <li aria-current="page" class="text-zinc-200">Compare</li>
+      </ol>
+    </nav>
+
+    <h1 class="text-3xl font-bold text-white mb-2">Compare Gaming Mice</h1>
+    <p class="text-zinc-400 mb-8">
+      Side-by-side specs for {mice.length} {mice.length === 1 ? 'mouse' : 'mice'}.
+      Click any column header to sort.
+    </p>
+
+    {hasMice ? (
+      <div class="relative overflow-x-auto rounded-xl border border-zinc-800" data-compare-table-wrapper>
+        <table class="w-full text-sm text-left" data-compare-table>
+          <thead class="text-xs uppercase text-zinc-400 bg-zinc-900 border-b border-zinc-800">
+            <tr>
+              <th
+                scope="col"
+                class="px-4 py-3 sticky left-0 z-10 bg-zinc-900 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                data-sort-key="name"
+                data-sort-type="string"
+                aria-sort="none"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Name
+                  <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                </span>
+              </th>
+              <th
+                scope="col"
+                class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                data-sort-key="weight"
+                data-sort-type="number"
+                aria-sort="none"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Weight
+                  <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                </span>
+              </th>
+              <th
+                scope="col"
+                class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                data-sort-key="sensor"
+                data-sort-type="string"
+                aria-sort="none"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Sensor
+                  <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                </span>
+              </th>
+              <th
+                scope="col"
+                class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                data-sort-key="dpi"
+                data-sort-type="number"
+                aria-sort="none"
+              >
+                <span class="inline-flex items-center gap-1">
+                  DPI
+                  <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                </span>
+              </th>
+              <th
+                scope="col"
+                class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                data-sort-key="polling"
+                data-sort-type="number"
+                aria-sort="none"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Polling Rate
+                  <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                </span>
+              </th>
+              <th
+                scope="col"
+                class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                data-sort-key="connectivity"
+                data-sort-type="string"
+                aria-sort="none"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Connectivity
+                  <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                </span>
+              </th>
+              <th
+                scope="col"
+                class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                data-sort-key="price"
+                data-sort-type="number"
+                aria-sort="none"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Price
+                  <span class="text-zinc-600" data-sort-arrow aria-hidden="true"></span>
+                </span>
+              </th>
+              <th
+                scope="col"
+                class="px-4 py-3 cursor-pointer select-none hover:text-white transition-colors whitespace-nowrap"
+                data-sort-key="rating"
+                data-sort-type="number"
+                aria-sort="descending"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Rating
+                  <span class="text-indigo-400" data-sort-arrow aria-hidden="true">&#9660;</span>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-800">
+            {mice.map((mouse) => {
+              const specs = getMouseSpecs(mouse);
+              const weight = specs.weight != null && Number.isFinite(specs.weight) && specs.weight > 0 ? specs.weight : null;
+              const sensor = specs.sensor?.trim() || null;
+              const dpi = specs.dpi != null && Number.isFinite(specs.dpi) && specs.dpi > 0 ? specs.dpi : null;
+              const pollingRate = specs.polling_rate != null && Number.isFinite(specs.polling_rate) && specs.polling_rate > 0 ? specs.polling_rate : null;
+              const connectivity = specs.connectivity?.trim() || null;
+              const price = mouse.retail_price != null && Number.isFinite(mouse.retail_price) && mouse.retail_price > 0 ? mouse.retail_price : null;
+              const rating = mouse.rating != null && Number.isFinite(mouse.rating) ? Math.min(Math.max(mouse.rating, 0), 10) : null;
+
+              return (
+                <tr class="bg-zinc-950 hover:bg-zinc-900 transition-colors" data-compare-row>
+                  <td
+                    class="px-4 py-3 sticky left-0 z-10 bg-zinc-950 font-medium text-white whitespace-nowrap"
+                    data-sort-value={mouse.product_name.toLowerCase()}
+                  >
+                    <a
+                      href={`/reviews/mice/${mouse.slug}`}
+                      class="hover:text-indigo-400 transition-colors"
+                    >
+                      {mouse.product_name}
+                    </a>
+                  </td>
+                  <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={weight ?? ''}>
+                    {weight != null ? `${weight}g` : <span class="text-zinc-600">--</span>}
+                  </td>
+                  <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={sensor?.toLowerCase() ?? ''}>
+                    {sensor ?? <span class="text-zinc-600">--</span>}
+                  </td>
+                  <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={dpi ?? ''}>
+                    {dpi != null ? dpi.toLocaleString() : <span class="text-zinc-600">--</span>}
+                  </td>
+                  <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={pollingRate ?? ''}>
+                    {pollingRate != null ? `${pollingRate.toLocaleString()} Hz` : <span class="text-zinc-600">--</span>}
+                  </td>
+                  <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={connectivity?.toLowerCase() ?? ''}>
+                    {connectivity ?? <span class="text-zinc-600">--</span>}
+                  </td>
+                  <td class="px-4 py-3 text-zinc-300 whitespace-nowrap" data-sort-value={price ?? ''}>
+                    {price != null ? `$${price.toFixed(2)}` : <span class="text-zinc-600">--</span>}
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap" data-sort-value={rating ?? ''}>
+                    {rating != null ? (
+                      <span class="font-bold text-indigo-400">{rating}/10</span>
+                    ) : (
+                      <span class="text-zinc-600">--</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="text-xs text-zinc-500 mt-4">
+        Showing {mice.length} {mice.length === 1 ? 'mouse' : 'mice'}, sorted by rating.
+        Click column headers to re-sort. Product names link to full reviews.
+      </p>
+    ) : (
+      <EmptyState
+        title="No mice to compare yet"
+        description="Mouse reviews are being added. Check back soon to compare specs side-by-side."
+        ctaText="Browse Reviews"
+        ctaHref="/reviews"
+      />
+    )}
+  </div>
+
+  {hasMice && (
+    <script>
+      function initCompareSort() {
+        const table = document.querySelector<HTMLTableElement>('[data-compare-table]');
+        if (!table) return;
+
+        const thead = table.querySelector('thead');
+        const tbody = table.querySelector('tbody');
+        if (!thead || !tbody) return;
+
+        const headers = thead.querySelectorAll<HTMLElement>('th[data-sort-key]');
+        let currentKey = 'rating';
+        let currentDir: 'asc' | 'desc' = 'desc';
+
+        function sortTable(key: string, type: string) {
+          // Toggle direction if same column, else default to desc for numbers, asc for strings
+          if (key === currentKey) {
+            currentDir = currentDir === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentDir = type === 'number' ? 'desc' : 'asc';
+          }
+          currentKey = key;
+
+          const rows = Array.from(tbody!.querySelectorAll<HTMLTableRowElement>('[data-compare-row]'));
+          const colIndex = Array.from(headers).findIndex((h) => h.dataset.sortKey === key);
+          if (colIndex < 0) return;
+
+          rows.sort((a, b) => {
+            const cellA = a.cells[colIndex];
+            const cellB = b.cells[colIndex];
+            if (!cellA || !cellB) return 0;
+
+            const valA = cellA.dataset.sortValue ?? '';
+            const valB = cellB.dataset.sortValue ?? '';
+
+            // Empty values sort to bottom regardless of direction
+            if (valA === '' && valB === '') return 0;
+            if (valA === '') return 1;
+            if (valB === '') return -1;
+
+            let cmp: number;
+            if (type === 'number') {
+              cmp = parseFloat(valA) - parseFloat(valB);
+            } else {
+              cmp = valA.localeCompare(valB);
+            }
+
+            return currentDir === 'asc' ? cmp : -cmp;
+          });
+
+          // Re-append sorted rows
+          rows.forEach((row) => tbody!.appendChild(row));
+
+          // Update aria-sort and arrows
+          headers.forEach((h) => {
+            const arrow = h.querySelector('[data-sort-arrow]');
+            if (h.dataset.sortKey === key) {
+              h.setAttribute('aria-sort', currentDir === 'asc' ? 'ascending' : 'descending');
+              if (arrow) {
+                arrow.textContent = currentDir === 'asc' ? '\u25B2' : '\u25BC';
+                arrow.className = 'text-indigo-400';
+              }
+            } else {
+              h.setAttribute('aria-sort', 'none');
+              if (arrow) {
+                arrow.textContent = '';
+                arrow.className = 'text-zinc-600';
+              }
+            }
+          });
+        }
+
+        headers.forEach((header) => {
+          header.addEventListener('click', () => {
+            const key = header.dataset.sortKey;
+            const type = header.dataset.sortType || 'string';
+            if (key) sortTable(key, type);
+          });
+
+          // Keyboard: Enter/Space triggers sort
+          header.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              const key = header.dataset.sortKey;
+              const type = header.dataset.sortType || 'string';
+              if (key) sortTable(key, type);
+            }
+          });
+
+          // Make headers focusable
+          header.setAttribute('tabindex', '0');
+          header.setAttribute('role', 'columnheader');
+        });
+      }
+
+      // Run on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCompareSort);
+      } else {
+        initCompareSort();
+      }
+    </script>
+  )}
+</BaseLayout>
