@@ -1,0 +1,89 @@
+---
+import { getCollection, render } from 'astro:content';
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import AffiliateDisclosure from '../../components/AffiliateDisclosure.astro';
+import { getProducts } from '../../lib/api';
+
+export async function getStaticPaths() {
+  const guides = await getCollection('guides');
+
+  if (guides.length === 0) {
+    console.warn('getStaticPaths: No guides found in content collection — no guide pages will be generated');
+    return [];
+  }
+
+  // Pre-fetch all products once to check for affiliate links per guide
+  const allProducts = await getProducts();
+  const productsBySlug = new Map(allProducts.map((p) => [p.slug, p]));
+
+  return guides.map((guide) => {
+    // Check if any referenced product has an affiliate link
+    const hasAffiliateLinks = guide.data.products.some((slug) => {
+      const product = productsBySlug.get(slug);
+      if (!product?.affiliate_link) return false;
+      try {
+        return new URL(product.affiliate_link).protocol === 'https:';
+      } catch {
+        return false;
+      }
+    });
+
+    return {
+      params: { slug: guide.id },
+      props: { guide, hasAffiliateLinks },
+    };
+  });
+}
+
+interface Props {
+  guide: Awaited<ReturnType<typeof getCollection<'guides'>>>[number];
+  hasAffiliateLinks: boolean;
+}
+
+const { guide, hasAffiliateLinks } = Astro.props;
+
+const { Content, headings } = await render(guide);
+
+// Build table of contents from h2 headings
+const tocItems = headings
+  .filter((h) => h.depth === 2)
+  .map((h) => ({ text: h.text, slug: h.slug }));
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Guides', href: '/guides' },
+  { label: guide.data.title },
+];
+---
+
+<ArticleLayout
+  title={guide.data.title}
+  description={guide.data.description}
+  breadcrumbs={breadcrumbs}
+  lastUpdated={guide.data.lastUpdated}
+>
+  {/* Table of contents */}
+  {tocItems.length > 1 && (
+    <Fragment slot="toc">
+      <ul class="space-y-1.5">
+        {tocItems.map((item) => (
+          <li>
+            <a href={`#${item.slug}`} class="text-sm text-zinc-400 hover:text-white transition-colors">
+              {item.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </Fragment>
+  )}
+
+  {/* MDX content */}
+  <Content />
+
+  {/* Affiliate disclosure at bottom of guide if any product cards have affiliate links */}
+  {hasAffiliateLinks && (
+    <div class="mt-10 not-prose">
+      <AffiliateDisclosure />
+    </div>
+  )}
+</ArticleLayout>
