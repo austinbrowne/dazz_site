@@ -93,6 +93,23 @@ export interface Product {
   affiliate_code: string | null;
 }
 
+/** Deal as returned by the public API */
+export interface Deal {
+  id: number;
+  product_id: number;
+  product_name: string;
+  product_slug: string;
+  category_slug: CategorySlug | null;
+  image_url: string | null;
+  normal_price: number;
+  sale_price: number;
+  retailer: string;
+  affiliate_link: string | null;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+}
+
 /** Company as returned by the public API */
 export interface Company {
   id: number;

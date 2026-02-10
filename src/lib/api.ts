@@ -1,4 +1,4 @@
-import type { Product, Company, CreatorProfile } from './types';
+import type { Product, Company, CreatorProfile, Deal } from './types';
 
 const API_BASE = import.meta.env.API_BASE_URL || 'http://mouse-domination:5000/api/v1/public';
 const API_KEY = import.meta.env.API_KEY || '';
@@ -44,6 +44,14 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 export async function getPicks(): Promise<Product[]> {
   const all = await getProducts();
   return all.filter(p => p.pick_category);
+}
+
+let _dealsCache: Deal[] | null = null;
+
+export async function getDeals(): Promise<Deal[]> {
+  if (_dealsCache !== null) return _dealsCache;
+  _dealsCache = (await apiFetch<Deal[]>('/deals')) ?? [];
+  return _dealsCache;
 }
 
 export async function getCompanies(): Promise<Company[]> {
